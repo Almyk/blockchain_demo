@@ -14,7 +14,7 @@ import time
 
 class Node(threading.Thread):
 
-    def __init__(self, host, port, callback):
+    def __init__(self, host, port, callback=None):
         super(Node, self).__init__()
 
         # IP and Port used for connection
@@ -56,9 +56,9 @@ class Node(threading.Thread):
     # Creates the TCP/IP socket for connections
     def serverInit(self):
         sock = socket.socket()  # create socket, by default uses AF_INET
-        sock.bind((None, self.port))  # None used as host to mean all available interfaces
+        sock.bind(('', self.port))  # '' used as host to mean all available interfaces
         sock.settimeout(15.0)  # 15 seconds
-        sock.listen()
+        sock.listen(10)  # backlog = 10, meaning 10 nodes can be waiting while establishing connection
         return sock
 
     # NodeConnection is just a basic class to create a connection node

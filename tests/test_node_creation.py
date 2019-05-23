@@ -1,4 +1,4 @@
-from .. import Node
+import Node
 
 
 node1 = Node.Node('localhost', 1111)
