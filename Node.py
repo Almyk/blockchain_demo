@@ -37,7 +37,7 @@ class Node(threading.Thread):
 
         self.shouldTerminate = False
 
-        self.debug = False
+        self.debug = True
 
     def setDebug(self, bool):
         self.debug = bool
@@ -53,6 +53,12 @@ class Node(threading.Thread):
         if self.debug:
             print("Node.dprint: " + message)
 
+    def eventNodeMessage(self, node, data):
+        self.callback("NODE_MESSAGE", self, node, data)
+
+    def eventConnectToNode(self, node):
+        self.callback("NEW_CONNECTION", self, node)
+
     # Creates the TCP/IP socket for connections
     def serverInit(self):
         sock = socket.socket()  # create socket, by default uses AF_INET
@@ -65,6 +71,8 @@ class Node(threading.Thread):
     # if more functionality is needed we should override this in our blockchain implementation
     # and probably inherit NodeConnection in that implementation
     def newConnection(self, conn, address, callback):
+        # TODO : when a new connection is made, we should get all the nodes that is new node is aware of
+        # so that all nodes are interconnected
         return NodeConnection(self, conn, address, callback)
 
     def removeClosedConnections(self):
@@ -150,6 +158,19 @@ class Node(threading.Thread):
                 # TODO: error handling
                 pass
 
+        for node in self.nodesIn:
+            node.stop()
+
+        for node in self.nodesOut:
+            node.stop()
+
+        for node in self.nodesIn:
+            node.join()
+
+        for node in self.nodesOut:
+            node.join()
+        self.dprint("Server Node " + self.getName() + " closed connection")
+
 
 class NodeConnection(threading.Thread):
     def __init__(self, server, sock, address, callback):
@@ -176,10 +197,10 @@ class NodeConnection(threading.Thread):
 
     def send(self, data):
         try:
-            message = json.dumps(data, seperators=(',', ':')) + "-SEP"
+            message = json.dumps(data, separators=(',', ':')) + "-SEP"
             self.sock.sendall(message.encode('utf-8'))
-        except:
-            self.server.dprint("NodeConnection.send: Unexpected Error while sending message:")
+        except Exception as e:
+            self.server.dprint("NodeConnection.send: Unexpected Error while sending message:" + str(e))
 
     def stop(self):
         self.shouldTerminate = True
@@ -205,9 +226,9 @@ class NodeConnection(threading.Thread):
             if message != "":
                 try:
                     self.buffer += str(message.decode("utf-8"))
-                except:
-                    # TODO: print error message
-                    pass
+                except Exception as e:
+                    self.server.dprint(
+                        "NewConnection.run: Error when trying to decode a message - " + self.getName() + " " + str(e))
 
                 # Get messages one by one using seperator -SEP
                 idx = self.buffer.find("-SEP")
@@ -221,7 +242,7 @@ class NodeConnection(threading.Thread):
                     except Exception as e:
                         print("NodeConnection.run: message could not be parsed. (%s) (%s) " % (data, e))
 
-                    self.server.eventNodeMessage(self, data)
+                    self.server.eventNodeMessage(self, data)  # invoke event, message received
 
                     if self.callback != None:
                         self.callback("MESSAGE", self.server, self, data)
