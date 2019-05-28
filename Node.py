@@ -105,7 +105,7 @@ class Node(threading.Thread):
                     self.callback("INBOUND_NODE_CLOSED", self, node, {})
 
                 node.join()
-                self.nodesIn.pop(self.nodesOut.index(node))
+                self.nodesIn.pop(self.nodesIn.index(node))
 
     # Uses sendToNode to send data to all the other nodes in the network
     def sendAll(self, data):
@@ -329,6 +329,7 @@ class NodeConnection(threading.Thread):
                         self.peerPort = address[1]
 
                     else:
+                        print(data)
                         self.server.eventNodeMessage(self, data)  # invoke event, message received
 
 
