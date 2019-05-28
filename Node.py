@@ -33,7 +33,7 @@ class Node(threading.Thread):
         self.nodesOut = []
         # List of all known addresses in the network
         self.knownAddresses = []
-        #self.knownAddresses.append([host, port])  # add self to known addresses
+        self.knownAddresses.append([host, port])  # add self to known addresses
 
         # Initialise the server
         self.sock = self.serverInit()
