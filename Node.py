@@ -31,13 +31,16 @@ class Node(threading.Thread):
         self.nodesIn = []
         # List of Outbound nodes
         self.nodesOut = []
+        # List of all known addresses in the network
+        self.knownAddresses = []
+        self.knownAddresses.append([host, port])  # add self to known addresses
 
         # Initialise the server
         self.sock = self.serverInit()
 
         self.shouldTerminate = False
 
-        self.debug = True
+        self.debug = False
 
     def setDebug(self, bool):
         self.debug = bool
@@ -51,13 +54,27 @@ class Node(threading.Thread):
 
     def dprint(self, message):
         if self.debug:
-            print("Node.dprint: " + message)
+            print("Node.dprint: " + str(message))
 
     def eventNodeMessage(self, node, data):
-        self.callback("NODE_MESSAGE", self, node, data)
+        if self.callback != None:
+            self.callback("NODE_MESSAGE", self, node, data)
 
     def eventConnectToNode(self, node):
-        self.callback("NEW_CONNECTION", self, node)
+        if self.callback != None:
+            self.callback("NEW_CONNECTION", self, node)
+
+    def getAllAddresses(self):
+        allnodes = self.getAllNodes()
+        addresses = []
+        for node in allnodes:
+            address = node.address
+            addresses.append(address)
+        return addresses
+
+    def getAllNodes(self):
+        allnodes = list(set(self.nodesOut).union(self.nodesIn)) # all nodes = union of inbound + outbound nodes
+        return allnodes
 
     # Creates the TCP/IP socket for connections
     def serverInit(self):
@@ -71,8 +88,6 @@ class Node(threading.Thread):
     # if more functionality is needed we should override this in our blockchain implementation
     # and probably inherit NodeConnection in that implementation
     def newConnection(self, conn, address, callback):
-        # TODO : when a new connection is made, we should get all the nodes that is new node is aware of
-        # so that all nodes are interconnected
         return NodeConnection(self, conn, address, callback)
 
     def removeClosedConnections(self):
@@ -96,7 +111,7 @@ class Node(threading.Thread):
     def sendAll(self, data):
         # Remove closed connections before trying to send messages to nodes
         self.removeClosedConnections()
-        allnodes = list(set(self.nodesIn).union(set(self.nodesOut)))  # all nodes = union of inbound + outbound nodes
+        allnodes = self.getAllNodes()
 
         for node in allnodes:
             self.sendToNode(node, data)
@@ -108,6 +123,14 @@ class Node(threading.Thread):
         except Exception as e:
             self.dprint("Node.sendToNode: Error while sending data to node (%s) - (%s)" %(node.id, e))
 
+    # this function should get a list of addresses to connect to
+    # addresses -> [[host, port], ... , [host, port]]
+    def connectToNodes(self, addresses):
+        for address in addresses:
+            host = address[0]
+            port = address[1]
+            self.connectToNode(host, int(port))
+
     def connectToNode(self, host, port):
         if host == self.host and port == self.port:
             self.dprint("Node.connectToNode: Can't connect to yourself")
@@ -115,7 +138,7 @@ class Node(threading.Thread):
 
         for node in self.nodesOut:
             if host == node.host and port == node.port:
-                self.dprint("Node.connectToNode: Already connect to this node.")
+                self.dprint(self.getName() + " Node.connectToNode: Already connected to this node. (%s, %s)" %(host, port))
                 return
 
         try:
@@ -125,12 +148,24 @@ class Node(threading.Thread):
             clientThread.start()
             self.nodesOut.append(clientThread)
             self.eventConnectToNode(clientThread)
+            clientThread.sendKnownAddresses()  # send the nodes we know about to the new node in our network
 
             if self.callback != None:
                 self.callback("CONNECTED_TO_NODE", self, clientThread, {})
 
+            # Check if address is already in known addresses
+            self.addKnownAddress(host, port)
+
         except Exception as e:
             self.dprint("Node.connectToNode: Error while connecting to node (%s, %s) - (%s)" %(host, port, e))
+
+    def addKnownAddress(self, host, port):
+        for address in self.knownAddresses:
+            if host == address[0] and port == address[1]:
+                self.dprint(
+                    self.getName() + " Node.connectToNode: Already know this address. (%s, %s)" % (host, port))
+                return
+        self.knownAddresses.append([host, port])
 
     def disconnectFromNode(self, node):
         if node in self.nodesOut:
@@ -143,20 +178,27 @@ class Node(threading.Thread):
         self.shouldTerminate = True
 
     # The part that is run when calling Node.start(), part of the threading library
+    # Main loop for accepting incoming connections
     def run(self):
         while not self.shouldTerminate:  # while thread should not terminate
-            try:
+            try:  # establish incoming connections
                 conn, address = self.sock.accept()
-
                 clientThread = self.newConnection(conn, address, self.callback)
                 clientThread.start()
                 self.nodesIn.append(clientThread)
+                clientThread.sendKnownAddresses()  # send the nodes we know about to the new node in our network
 
                 if self.callback != None:
                     self.callback("NODE_CONNECTED", self, clientThread, {})
-            except:
-                # TODO: error handling
+            except socket.timeout:
                 pass
+            except Exception as e:
+                self.dprint(
+                    "Node.run: Error while trying to establish a connection with node - " + self.getName() + " " + str(e)
+                )
+
+        self.dprint(self.getName() + " Number of connected outbound nodes: " + str(len(self.nodesOut)))
+        self.dprint(self.getName() + " Number of connected inbound nodes: " + str(len(self.nodesIn)))
 
         for node in self.nodesIn:
             node.stop()
@@ -195,12 +237,20 @@ class NodeConnection(threading.Thread):
         id.update(temp.encode('ascii'))  # use host+port+randomVal to create a unique id using RSA hash function
         return id.hexdigest()
 
-    def send(self, data):
+    def send(self, data, type=None):
         try:
+            data['Sender'] = self.server.getName()
+            data['Type'] = type
             message = json.dumps(data, separators=(',', ':')) + "-SEP"
             self.sock.sendall(message.encode('utf-8'))
         except Exception as e:
             self.server.dprint("NodeConnection.send: Unexpected Error while sending message:" + str(e))
+
+    # When a new connection have been established, we should send all of our known nodes
+    def sendKnownAddresses(self):
+        addresses = self.server.knownAddresses
+        data = {"Addresses": addresses}
+        self.send(data, "node_propagation")
 
     def stop(self):
         self.shouldTerminate = True
@@ -210,11 +260,11 @@ class NodeConnection(threading.Thread):
         self.sock.settimeout(15.0)
 
         while not self.shouldTerminate:
-            message = ""
+            message = dict()
 
             try:
                 # https://docs.python.org/3/library/socket.html
-                # Note For best match with hardware and network realities,
+                # Note: For best match with hardware and network realities,
                 # the value of bufsize should be a relatively small power of 2, for example, 4096.
                 message = self.sock.recv(4096)  # return value is a bytes object
                 message = message.encode("utf-8")
@@ -224,15 +274,19 @@ class NodeConnection(threading.Thread):
                 self.shouldTerminate = True
 
             if message != "":
+                if message == {}:  # an empty dict is received when peer node is closed
+                    self.shouldTerminate = True
+                    continue
                 try:
                     self.buffer += str(message.decode("utf-8"))
                 except Exception as e:
                     self.server.dprint(
-                        "NewConnection.run: Error when trying to decode a message - " + self.getName() + " " + str(e))
+                        "NewConnection.run: Error when trying to decode a message - " + self.getName() + " " + str(e)
+                    )
 
                 # Get messages one by one using seperator -SEP
                 idx = self.buffer.find("-SEP")
-                while(idx > 0):
+                while idx > 0:
                     data = self.buffer[0:idx]
                     self.buffer = self.buffer[idx+4:]
 
@@ -240,12 +294,16 @@ class NodeConnection(threading.Thread):
                         data = json.loads(data)
 
                     except Exception as e:
-                        print("NodeConnection.run: message could not be parsed. (%s) (%s) " % (data, e))
+                        self.server.dprint("NodeConnection.run: message could not be parsed. "+str(data)+" "+str(e))
 
-                    self.server.eventNodeMessage(self, data)  # invoke event, message received
+                    if data['Type'] == "node_propagation":
+                        addresses = data['Addresses']
+                        self.server.dprint("NodeConnection.run: Node Propagation " + str(addresses))
+                        self.server.connectToNodes(addresses)
 
-                    if self.callback != None:
-                        self.callback("MESSAGE", self.server, self, data)
+                    else:
+                        self.server.eventNodeMessage(self, data)  # invoke event, message received
+
 
                     idx = self.buffer.find("-SEP")
             time.sleep(0.1)
