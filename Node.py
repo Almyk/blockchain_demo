@@ -33,7 +33,7 @@ class Node(threading.Thread):
         self.nodesOut = []
         # List of all known addresses in the network
         self.knownAddresses = []
-        self.knownAddresses.append([host, port])  # add self to known addresses
+        #self.knownAddresses.append([host, port])  # add self to known addresses
 
         # Initialise the server
         self.sock = self.serverInit()
@@ -113,8 +113,20 @@ class Node(threading.Thread):
         self.removeClosedConnections()
         allnodes = self.getAllNodes()
 
+        sent = dict()
         for node in allnodes:
-            self.sendToNode(node, data)
+            port = node.peerPort
+            host = node.peerHost
+            if port not in sent.keys():
+                self.sendToNode(node, data)
+                sent[port] = [host]
+            elif host not in sent[port]:
+                self.sendToNode(node, data)
+                hosts = sent[port]
+                hosts.append(host)
+                sent[port] = hosts
+            time.sleep(1)  # TODO : this is only for debugging
+            print("sent:", sent)  # TODO : this is only for debugging
 
     def sendToNode(self, node, data):
         try:
@@ -149,6 +161,7 @@ class Node(threading.Thread):
             self.nodesOut.append(clientThread)
             self.eventConnectToNode(clientThread)
             clientThread.sendKnownAddresses()  # send the nodes we know about to the new node in our network
+            clientThread.sendPeerAddress()
 
             if self.callback != None:
                 self.callback("CONNECTED_TO_NODE", self, clientThread, {})
@@ -226,6 +239,9 @@ class NodeConnection(threading.Thread):
         self.callback = callback
         self.shouldTerminate = False
 
+        self.peerHost = address[0]
+        self.peerPort = address[1]
+
         self.buffer = ""  # Used for messages between nodes
 
         self.id = self.createUniqueID()  # create ID
@@ -251,6 +267,11 @@ class NodeConnection(threading.Thread):
         addresses = self.server.knownAddresses
         data = {"Addresses": addresses}
         self.send(data, "node_propagation")
+
+    def sendPeerAddress(self):
+        address = [self.server.host, self.server.port]
+        data = {"Address": address}
+        self.send(data, "peer_address")
 
     def stop(self):
         self.shouldTerminate = True
@@ -300,6 +321,12 @@ class NodeConnection(threading.Thread):
                         addresses = data['Addresses']
                         self.server.dprint("NodeConnection.run: Node Propagation " + str(addresses))
                         self.server.connectToNodes(addresses)
+
+                    elif data['Type'] == "peer_address":
+                        address = data['Address']
+                        self.server.dprint("NodeConnection.run: Peer Address " + str(address))
+                        self.peerHost = address[0]
+                        self.peerPort = address[1]
 
                     else:
                         self.server.eventNodeMessage(self, data)  # invoke event, message received

@@ -36,8 +36,15 @@ node2.connectToNode('localhost', port4)
 time.sleep(2)
 node1.connectToNode('localhost', port3)  # node 1 connects to node 3 -> node 3 should connect to node 2
                                          # and since node 2 is connected to node 4 -> node 3 should connect to node 2
-time.sleep(5)
-node3.sendAll({"test": "testan 3"})     # node 3 should send message to node 1, 2 and 4
+# time.sleep(5)
+# print("Messages from node 3")
+# node3.sendAll({"test1": "node 3"})     # node 3 should send message to node 1, 2 and 4
+# time.sleep(3)
+# print("Messages from node 4")
+# node4.sendAll({"test2": "node 4"})      # should send to all other nodes in network
+time.sleep(3)
+print("Messages from node 2")
+node2.sendAll({"test3": "node 2"})      # should send to all other nodes in network
 
 node1.stop()
 node2.stop()
