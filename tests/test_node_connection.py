@@ -7,7 +7,7 @@ def eventCallback(event, server, node, data=None):
     if event == "NODE_MESSAGE":
         print("Message from", node.getName(), "to", server.getName(), "Data:", str(data))
     elif event == "CONNECTED_TO_NODE":
-        print("Connection established to ", node.host, node.port, "from", server.host, server.port)
+        print("Connection established to", node.host, node.port, "from", server.host, server.port)
 
 # to solve the "name already used" when testing
 port1 = random.randint(1111,9999)

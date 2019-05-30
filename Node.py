@@ -126,7 +126,7 @@ class Node(threading.Thread):
                 hosts.append(host)
                 sent[port] = hosts
             time.sleep(1)  # TODO : this is only for debugging
-            print("sent:", sent)  # TODO : this is only for debugging
+            #print("sent:", sent)  # TODO : this is only for debugging
 
     def sendToNode(self, node, data):
         try:
@@ -258,7 +258,7 @@ class NodeConnection(threading.Thread):
             data['Sender'] = self.server.getName()
             data['Type'] = type
             message = json.dumps(data, separators=(',', ':')) + "-SEP"
-            self.sock.sendall(message.encode('utf-8'))
+            self.sock.sendall(message.encode('utf-8'))  # encode message into byte object and send
         except Exception as e:
             self.server.dprint("NodeConnection.send: Unexpected Error while sending message:" + str(e))
 
@@ -288,9 +288,9 @@ class NodeConnection(threading.Thread):
                 # Note: For best match with hardware and network realities,
                 # the value of bufsize should be a relatively small power of 2, for example, 4096.
                 message = self.sock.recv(4096)  # return value is a bytes object
-                message = message.encode("utf-8")
+                message = message.decode("utf-8")
 
-            except:
+            except Exception as e:
                 # terminate Node if there is an issue with the connection
                 self.shouldTerminate = True
 
@@ -298,14 +298,9 @@ class NodeConnection(threading.Thread):
                 if message == {}:  # an empty dict is received when peer node is closed
                     self.shouldTerminate = True
                     continue
-                try:
-                    self.buffer += str(message.decode("utf-8"))
-                except Exception as e:
-                    self.server.dprint(
-                        "NewConnection.run: Error when trying to decode a message - " + self.getName() + " " + str(e)
-                    )
 
                 # Get messages one by one using seperator -SEP
+                self.buffer += message
                 idx = self.buffer.find("-SEP")
                 while idx > 0:
                     data = self.buffer[0:idx]
@@ -329,7 +324,7 @@ class NodeConnection(threading.Thread):
                         self.peerPort = address[1]
 
                     else:
-                        print(data)
+                        #print(data)
                         self.server.eventNodeMessage(self, data)  # invoke event, message received
 
 
