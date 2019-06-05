@@ -9,4 +9,11 @@ class BlockchainNode(Node.Node):
 
     def eventNodeMessage(self, node, data):
         # TODO: handle different kinds of communications between nodes here
+
+        type = data['Type']
+
+        if type == 'transaction':
+            pass
+        if type == 'new_block':
+            pass
         pass
