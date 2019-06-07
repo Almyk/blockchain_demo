@@ -74,7 +74,7 @@ class BlockchainNode(Node.Node):
             pass
 
 
-        def append_block():
+        def append_block(self):
             '''
             이 함수를 호출하기 전에,
             is_valid_block가 먼저 호출되어야 한다. (예외, genesis 블록 추가할 때는 ㄱㅊ)
