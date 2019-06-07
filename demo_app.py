@@ -1,23 +1,33 @@
 from tkinter import *
+from tkinter import messagebox
 from PIL import ImageTk, Image
 import time
 
 def generate_key():
+    # TODO: use the blockchain class' key generation function
+    messagebox.showinfo("New Key Generated", "A new key has been generated and loaded into the client\n\nYou can find the key stored in your documents folder")
     pass
 
 def load_key():
+    # TODO: popup that asks for your key
     pass
 
 def make_transaction():
+    # TODO: popup where you set receiver, using public key, and determine amount to send
     pass
 
 def start_mining():
+    # TODO: tell the node to start mining process
+    messagebox.showinfo("Mining", "Started Mining\n\nIf you succeed in generating a block you will earn coins")
     pass
 
 def stop_mining():
+    # TODO: tell the node to stop mining
+    messagebox.showinfo("Mining", "Stopped Mining")
     pass
 
 def view_history():
+    # TODO: popup that shows the block history, scrollable window
     pass
 
 root = Tk()
