@@ -1,5 +1,6 @@
 from tkinter import *
 from PIL import ImageTk, Image
+import time
 
 def generate_key():
     pass
@@ -19,81 +20,78 @@ def stop_mining():
 def view_history():
     pass
 
-if __name__ == '__main__':
-    root = Tk()
-    root.title("Sogang Blockcoin")
-    root.configure(background="black")
-    root.resizable(0, 0)
+root = Tk()
+root.title("Sogang Blockcoin")
+root.configure(background="black")
+root.resizable(0, 0)
 
 
-    # get background image
-    bk_image = Image.open("sogang.jpg")
-    width, height = bk_image.size
-    width *= 2
-    height *= 2
+# get background image
+bk_image = Image.open("sogang.jpg")
+width, height = bk_image.size
+width *= 2
+height *= 2
 
-    # create canvas
-    # C = Canvas(window, height=height, width=width)
-    # C.pack()
-    canvas = Canvas(root, width=width, height=height)
-    canvas.pack()
+# create canvas
+canvas = Canvas(root, width=width, height=height)
+canvas.pack()
 
-    # add background image
-    bk_image = bk_image.resize((width, height), Image.ANTIALIAS)
-    bk_image = ImageTk.PhotoImage(bk_image)
-    canvas.create_image(width/2,height/2, image=bk_image)
+# add background image
+bk_image = bk_image.resize((width, height), Image.ANTIALIAS)
+bk_image = ImageTk.PhotoImage(bk_image)
+canvas.create_image(width/2,height/2, image=bk_image)
 
-    # add quit button
-    quit_button = Button(root, text="Quit", command=root.quit, anchor=W, fg='white',
+# add quit button
+quit_button = Button(root, text="Quit", command=root.quit, anchor=W, fg='white',
+                     width=10, activebackground="#33B5E5", highlightbackground="#666")
+canvas.create_window(10, 10, anchor=NW, window=quit_button)
+
+temp_y = 160
+rel_y = 40
+# generate key button
+gen_key_btn = Button(root, text="Generate Key", command=generate_key, anchor=W, fg='white',
+                     width=10, activebackground="#33B5E5", highlightbackground="#666")
+canvas.create_window(10, temp_y, anchor=NW, window=gen_key_btn)
+
+# load key button
+load_key_btn = Button(root, text="Load Key", command=load_key, anchor=W, fg='white',
+                      width=10, activebackground="#33B5E5", highlightbackground="#666")
+canvas.create_window(10, temp_y + rel_y, anchor=NW, window=load_key_btn)
+
+# make transaction button
+transaction_btn = Button(root, text="Transaction", command=make_transaction, anchor=W, fg='white',
                          width=10, activebackground="#33B5E5", highlightbackground="#666")
-    canvas.create_window(10, 10, anchor=NW, window=quit_button)
+canvas.create_window(10, temp_y + 2*rel_y, anchor=NW, window=transaction_btn)
 
-    temp_y = 160
-    rel_y = 40
-    # generate key button
-    gen_key_btn = Button(root, text="Generate Key", command=generate_key, anchor=W, fg='white',
-                         width=10, activebackground="#33B5E5", highlightbackground="#666")
-    canvas.create_window(10, temp_y, anchor=NW, window=gen_key_btn)
-
-    # load key button
-    load_key_btn = Button(root, text="Load Key", command=load_key, anchor=W, fg='white',
+# Start Mining button
+start_mining_btn = Button(root, text="Start Mining", command=start_mining, anchor=W, fg='white',
                           width=10, activebackground="#33B5E5", highlightbackground="#666")
-    canvas.create_window(10, temp_y + rel_y, anchor=NW, window=load_key_btn)
+canvas.create_window(10, temp_y + 3*rel_y, anchor=NW, window=start_mining_btn)
 
-    # make transaction button
-    transaction_btn = Button(root, text="Transaction", command=make_transaction, anchor=W, fg='white',
-                             width=10, activebackground="#33B5E5", highlightbackground="#666")
-    canvas.create_window(10, temp_y + 2*rel_y, anchor=NW, window=transaction_btn)
-
-    # Start Mining button
-    start_mining_btn = Button(root, text="Start Mining", command=start_mining, anchor=W, fg='white',
-                              width=10, activebackground="#33B5E5", highlightbackground="#666")
-    canvas.create_window(10, temp_y + 3*rel_y, anchor=NW, window=start_mining_btn)
-
-    # Stop Mining button
-    stop_mining_btn = Button(root, text="Stop Mining", command=stop_mining, anchor=W, fg='white',
-                             width=10, activebackground="#33B5E5", highlightbackground="#666")
-    canvas.create_window(10, temp_y + 4*rel_y, anchor=NW, window=stop_mining_btn)
-
-    # Block History button
-    history_btn = Button(root, text="Block History", command=view_history, anchor=W, fg='white',
+# Stop Mining button
+stop_mining_btn = Button(root, text="Stop Mining", command=stop_mining, anchor=W, fg='white',
                          width=10, activebackground="#33B5E5", highlightbackground="#666")
-    canvas.create_window(10, temp_y + 5*rel_y, anchor=NW, window=history_btn)
+canvas.create_window(10, temp_y + 4*rel_y, anchor=NW, window=stop_mining_btn)
+
+# Block History button
+history_btn = Button(root, text="Block History", command=view_history, anchor=W, fg='white',
+                     width=10, activebackground="#33B5E5", highlightbackground="#666")
+canvas.create_window(10, temp_y + 5*rel_y, anchor=NW, window=history_btn)
 
 
-    # Display current transactions
-    temp_y = 480
-    rel_y = 26
-    curr_trans_box = Text(root, width=75, height=10, wrap=WORD, font='none 14 bold',
-                          background='gray', highlightbackground="#777")
-    canvas.create_window(40, temp_y+rel_y, anchor=NW, window=curr_trans_box)
-    curr_trans_box.bindtags((str(curr_trans_box), str(root), "all"))
+# Display current transactions
+temp_y = 480
+rel_y = 26
+curr_trans_box = Text(root, width=75, height=10, wrap=WORD, font='none 14 bold',
+                      background='gray', highlightbackground="#666")
+canvas.create_window(40, temp_y+rel_y, anchor=NW, window=curr_trans_box)
+curr_trans_box.bindtags((str(curr_trans_box), str(root), "all"))
 
-    curr_trans_label = Label(root, text="Current Transactions:", anchor=W,
-                             fg='black', bg='#666', font='none 16 bold')
-    canvas.create_window(10, temp_y, anchor=NW, window=curr_trans_label)
+curr_trans_label = Label(root, text="Current Transactions:", anchor=W,
+                         fg='black', bg='#666', font='none 16 bold')
+canvas.create_window(10, temp_y, anchor=NW, window=curr_trans_label)
 
-    text = """1.
+text = """1.
 2.
 3.
 4.
@@ -103,9 +101,40 @@ if __name__ == '__main__':
 8.
 9.
 10."""
-    curr_trans_num = Label(root, width=3, height=10, font='none 14 bold',
-                           background='#777', highlightbackground="#777", text=text)
-    canvas.create_window(10, temp_y + rel_y, anchor=NW, window=curr_trans_num)
-    ###
+curr_trans_num = Label(root, width=3, height=10, font='none 14 bold',
+                       background='#666', highlightbackground="#666", text=text)
+canvas.create_window(10, temp_y + rel_y, anchor=NW, window=curr_trans_num)
+### End of display current transactions ###
 
-    root.mainloop()
+# Display my transactions
+temp_x = width
+label_x = width/2 + width/4 + 97 + 10
+temp_y = 230
+rel_y = 26
+
+my_trans_box = Text(root, width=40, wrap=WORD, font='none 14 bold',
+                      background='gray', highlightbackground="#666")
+canvas.create_window(temp_x, temp_y+rel_y, anchor=NE, window=my_trans_box)
+my_trans_box.bindtags((str(my_trans_box), str(root), "all"))
+
+my_trans_label = Label(root, text="My Transactions:", anchor=W,
+                         fg='black', bg='#666', font='none 16 bold')
+canvas.create_window(label_x, temp_y, anchor=NE, window=my_trans_label)
+### END of display my transaction ###
+
+# display my money
+temp_x = label_x + width/16
+
+my_money = Text(root, width=10, height=1, wrap=WORD, font='none 14 bold',
+                      background='gray', highlightbackground="#666")
+canvas.create_window(temp_x, 10, anchor=NW, window=my_money)
+my_money.bindtags((str(my_money), str(root), "all"))
+
+my_trans_label = Label(root, text="My Money:", anchor=W,
+                         fg='black', bg='#666', font='none 16 bold')
+canvas.create_window(temp_x, 10, anchor=NE, window=my_trans_label)
+my_money.insert(END, "0000000000")
+### END of display my mone ###
+
+root.mainloop()
+
