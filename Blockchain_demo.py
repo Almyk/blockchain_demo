@@ -187,6 +187,7 @@ class BlockchainNode(Node.Node):
         통과하면 return True
         실패하면 return False
 
+        eventNodeMessage에서 is_valid_transaction 함수를 호출했을 때,
         검증에 통과하면 자신의 transaction pool에 저장하고,
         검증에 실패하면 받은 transaction을 무시한다. (아무 행동도 하지 않는다.)
         '''
@@ -199,6 +200,7 @@ class BlockchainNode(Node.Node):
         정답인 경우 return True
         아닌 경우 return False
 
+        eventNodeMessage에서 is_valid_block 함수를 호출했을 때,
         검증에 통과하면 자신의 블록체인에 추가하고,
         검증에 실패하면 받은 block을 무시한다. (아무 행동도 하지 않는다.)
         '''
