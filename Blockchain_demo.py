@@ -3,13 +3,11 @@ import json  # p2p네트워크로 이동되는 모든 데이터는 json이라 �
 import time  # Block에 기록되는 time_stamp는 time.time()으로부터 구해짐
 import hashlib  # hashlib.sha256()
 
-
 class BlockchainNode(Node.Node):
 
     class Transaction:
         # Transaction의 생성자
-        def __init__(self, sender: str, recipient: str, data: str, 
-                     digital_signature, public_key):
+        def __init__(self, sender: str, recipient: str, item_history: str, public_key):
             '''
             sender : 보내는 사람의 URL
             recipient : 받는 사람의 URL
@@ -21,8 +19,8 @@ class BlockchainNode(Node.Node):
             '''            
             self.sender = sender
             self.recipient = recipient
-            self.data = data
-            self.digital_signature = digital_signature
+            self.item_histroy = item_history
+#            self.digital_signature =   생성필요
             self.public_key = public_key
 
 
@@ -50,7 +48,9 @@ class BlockchainNode(Node.Node):
                 '''
                 sha256을 이용해서 block의 hash값을 return
                 '''
-                pass
+                merge_string = str(self.index) + str(self.time_stamp) + str(self.prev_block_hash) + str(self.transaction_list) + str(self.nonce)
+
+                return hashlib.sha256(merge_string.encode()).hexdigest()
 
         # Blockchain의 생성자
         def __init__(self):
@@ -60,7 +60,8 @@ class BlockchainNode(Node.Node):
             self.chain = []
             # Create the genesis block
             # 임의의 genesis block을 생성해서 추가해줘야 한다..!
-            self.append_block()
+            genesis_block = Block(0,0,0,[],0)
+            self.append_block(genesis_block)
 
 
         def resolve_conflicts(self):
@@ -74,13 +75,13 @@ class BlockchainNode(Node.Node):
             pass
 
 
-        def append_block(self):
+        def append_block(self,block: Block):
             '''
             이 함수를 호출하기 전에,
             is_valid_block가 먼저 호출되어야 한다. (예외, genesis 블록 추가할 때는 ㄱㅊ)
             블록체인에 
             '''
-            pass
+            self.chain.append(block)
 
 
         @property
@@ -99,29 +100,27 @@ class BlockchainNode(Node.Node):
         self.public_key = gen_public_key(self.private_key)
         self.node_address = gen_node_address(self.public_key)
 
-    
+
     @staticmethod
     def gen_private_key():
         '''
         개인키는 난수생성기를 통해 생성
         '''
         pass
-    
-    
+
     @staticmethod
     def gen_public_key(private_key):
         '''
         개인키로부터 타원곡선암호화를 사용해서 생성
         '''
         pass
-    
-    
+
     @staticmethod
     def gen_node_address(public_key):
         '''
         노드 주소는 공개키로부터 해시함수를 사용해서 생성한다.
         '''
-        pass
+        return hashlib.sha256(public_key).hexdigest()
     
     
     def eventNodeMessage(self, node, data):
