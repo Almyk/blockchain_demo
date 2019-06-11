@@ -96,6 +96,7 @@ class BlockchainNode(Node.Node):
     # BlockchainNode의 생성자
     def __init__(self, host, port, callback=None):
         super(BlockchainNode, self).__init__(host, port, callback)
+        self.blockchain = Blockchain()
         self.transaction_pool = []
         self.private_key = gen_private_key()
         self.public_key = gen_public_key(self.private_key)
@@ -209,5 +210,4 @@ class BlockchainNode(Node.Node):
         검증에 실패하면 받은 block을 무시한다. (아무 행동도 하지 않는다.)
         '''
         level = 0x000000100000
-        return (block.get_hash_val() < level) && 
-        pass
+        return (block.get_hash_val() < level) and(self.blockchain.get_last_block().get_hash_val() == block.previous_block_hash)
