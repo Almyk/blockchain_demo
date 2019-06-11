@@ -4,11 +4,12 @@ import time  # Block에 기록되는 time_stamp는 time.time()으로부터 구�
 import hashlib  # hashlib.sha256()
 from fastecdsa import ecdsa,keys,curve
 #https://pypi.org/project/fastecdsa/
+LEVEL = "0000001"
 class BlockchainNode(Node.Node):
 
     class Transaction:
         # Transaction의 생성자
-        def __init__(self, sender: str, recipient: str, item_history: str, public_key):
+        def __init__(self, sender: str, recipient: str, item_history: str,private_key,public_key):
             '''
             sender : 보내는 사람의 URL
             recipient : 받는 사람의 URL
@@ -41,7 +42,7 @@ class BlockchainNode(Node.Node):
                 self.index = index
                 self.time_stamp = time_stamp
                 self.prev_block_hash = prev_block_hash
-                self.transaction_list = transaction_list
+                self.transaction_list = transaction_list.copy()
                 self.nonce = nonce
 
 
@@ -142,16 +143,16 @@ class BlockchainNode(Node.Node):
 
         
     # 아래의 method들은 네트워크의 도움이 필요하다.
-    def proof_of_work(block, func) -> int:
+    def proof_of_work(block) -> bool:
         '''
         작업증명 과정
         node에서 임의로 함수를 전달해서 채굴작업 알고리즘을 바꿀 수 있다.
         mine함수에서 호출되며, nonce값을 반환한다.
         '''
-	proof = 0
-	while func(block.prev_block_hash, proof) is False:
-		proof+=1
-	return proof
+	block.nonce = 0
+	while block.get_hash_val() > LEVEL:
+		block.nonce+=1
+	return True
 	'''
 	by rindid: 
 	1. 채굴작업 알고리즘을 지닌 func의 원형은 안보이는데 어디있는지? 일단 어떤 알고리즘을
@@ -162,19 +163,11 @@ class BlockchainNode(Node.Node):
 	3. 뭘 가지고 proof를 검증할 것인가? 이전 block의 unique한 데이터 한개와 proof를 통해 
 	구하는 과정이 필요할거같다. 일단 block.prev_block_hash을 사용하였다.
 	'''
-	#이전 hash와 1씩 커지는 proof를 이용하여 마지막 두 자리가 00이 될 경우 true를 리턴.
-	#'답인 proof'=nonce이기 때문에, 
-	#valid_func(prev_block_hash, nonce)==true라는 결과가 나와야.
-    def valid_func(prev_hash, proof):
-	merge_proof=str(prev_hash)+str(proof)
-	merge_hash=hashlib.sha256(merge_proof.encode()).hexdigest()
-	return merge_hash[:2] == "00"
-        
 
 
     # 아래의 함수들은 P2P네트워크의 도움이 필요한 함수들 == Node가 수행하는 함수겠지
 
-    def mine(self, func):
+    def mine(self):
         '''
         transaction pool에 Transaction이 10개 이상 쌓이면,
         pool에서 Transaction 10개를 가지고 Block생성한 다음, Nonce를 구하면, 네트워크로 전송
@@ -183,7 +176,13 @@ class BlockchainNode(Node.Node):
         '''
 		#다른 node가 결과를 구했다는 interrupt가 들어오면 mine을 중간에 멈추게 하는 방식으로 구현할 것인지?
 		#그렇게 구현할려면 좀 복잡한 과정이 필요하지 않나?(파알못이라..)
-        nonce = proof_of_work(func)
+        while len(self.transaction_pool) >= 10 :
+            pass
+        prev = self.blockchain.get_last_block()
+        new_transaction = self.transation_pool[0:10]
+        self.transation_pool = self.transation_pool[10:]
+        block = Block(prev.index+1,time.time(),prev.get_hash_val(),new_transaction,0)
+        proof_of_work(block)
 
 
     def gen_transaction(self, sender: str, receiver: str, data: str):
@@ -195,7 +194,8 @@ class BlockchainNode(Node.Node):
         3. Transaction에 공개키를 포함시킨다.
         4. 생성된 Transaction을 P2P네트워크에 전파한다.
         '''
-        pass
+        new_transaction =Transaction(sender,receiver,data,private_key,public_key)
+        #전파 필요
 
 
     def get_blockchain_from_network(self):
@@ -222,7 +222,7 @@ class BlockchainNode(Node.Node):
         return valid
 
 
-    def is_valid_block(self, func, block: Block) -> bool:
+    def is_valid_block(self, block: Block) -> bool:
         '''
         블록 내부에 존재하는 nonce와 이전의 블록을 통해서 정답이 맞는지 검증한다.
         정답인 경우 return True
@@ -237,4 +237,5 @@ class BlockchainNode(Node.Node):
 	  
    	# block에서 받은 prev_block_hash와 이전 블록의 hash값이 동일한지 확인? 
   	# if(block.prev_block_hash == 이전블록.get_hash_val())
-	return func(block.prev_block_hash, block.nonce)
+        prev = self.blockchain.get_last_block()
+	return (prev.get_hash_val() == block.prev_block_hash )  and  (block.get_hash_val() < LEVEL)
