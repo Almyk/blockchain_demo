@@ -61,7 +61,7 @@ class BlockchainNode(Node.Node):
             self.chain = []
             # Create the genesis block
             # 임의의 genesis block을 생성해서 추가해줘야 한다..!
-            genesis_block = Block(0,0,0,[],0)
+            genesis_block = Block(0,time(),0,[],0)
             self.append_block(genesis_block)
 
 
@@ -142,13 +142,34 @@ class BlockchainNode(Node.Node):
 
         
     # 아래의 method들은 네트워크의 도움이 필요하다.
-    def proof_of_work(func) -> int:
+    def proof_of_work(block, func) -> int:
         '''
         작업증명 과정
         node에서 임의로 함수를 전달해서 채굴작업 알고리즘을 바꿀 수 있다.
         mine함수에서 호출되며, nonce값을 반환한다.
         '''
-        pass
+	proof = 0
+	while func(block.prev_block_hash, proof) is False:
+		proof+=1
+	return proof
+	'''
+	by rindid: 
+	1. 채굴작업 알고리즘을 지닌 func의 원형은 안보이는데 어디있는지? 일단 어떤 알고리즘을
+	쓰는지 몰라서 func에 proof와 block을 넣어두었다. 참고한 두 블록체인은 proof값을 
+	+1씩 하면서 hash값을 찾아 그 끝의 두자리 혹은 네자리가 0인 알고리즘을 사용하고 있더라.
+	2. 리턴할 값이 nonce값이 되어야하기에, get_hash_val함수를 사용하지 않았다.
+	get_hash_val함수를 사용하고 싶다면 block자체가 변경되기때문에 nonce값이 리턴되는게?
+	3. 뭘 가지고 proof를 검증할 것인가? 이전 block의 unique한 데이터 한개와 proof를 통해 
+	구하는 과정이 필요할거같다. 일단 block.prev_block_hash을 사용하였다.
+	'''
+	#이전 hash와 1씩 커지는 proof를 이용하여 마지막 두 자리가 00이 될 경우 true를 리턴.
+	#'답인 proof'=nonce이기 때문에, 
+	#valid_func(prev_block_hash, nonce)==true라는 결과가 나와야.
+    def valid_func(prev_hash, proof):
+	merge_proof=str(prev_hash)+str(proof)
+	merge_hash=hashlib.sha256(merge_proof.encode()).hexdigest()
+	return merge_hash[:2] == "00"
+        
 
 
     # 아래의 함수들은 P2P네트워크의 도움이 필요한 함수들 == Node가 수행하는 함수겠지
@@ -160,6 +181,8 @@ class BlockchainNode(Node.Node):
         만일 다른 노드에서 먼저 Nonce를 전송했다면, 내가 하고있던 mine은 interrupted되고, 
         nonce를 먼저 구한 노드로부터 새로운 Block을 제공받음
         '''
+		#다른 node가 결과를 구했다는 interrupt가 들어오면 mine을 중간에 멈추게 하는 방식으로 구현할 것인지?
+		#그렇게 구현할려면 좀 복잡한 과정이 필요하지 않나?(파알못이라..)
         nonce = proof_of_work(func)
 
 
@@ -199,7 +222,7 @@ class BlockchainNode(Node.Node):
         return valid
 
 
-    def is_valid_block(self, block: Block) -> bool:
+    def is_valid_block(self, func, block: Block) -> bool:
         '''
         블록 내부에 존재하는 nonce와 이전의 블록을 통해서 정답이 맞는지 검증한다.
         정답인 경우 return True
@@ -209,5 +232,9 @@ class BlockchainNode(Node.Node):
         검증에 통과하면 자신의 블록체인에 추가하고,
         검증에 실패하면 받은 block을 무시한다. (아무 행동도 하지 않는다.)
         '''
-        level = 0x000000100000
-        return (block.get_hash_val() < level) and(self.blockchain.get_last_block().get_hash_val() == block.previous_block_hash)
+  	#  level = 0x000000100000
+  	#  return (block.get_hash_val() < level) &&
+	  
+   	# block에서 받은 prev_block_hash와 이전 블록의 hash값이 동일한지 확인? 
+  	# if(block.prev_block_hash == 이전블록.get_hash_val())
+	return func(block.prev_block_hash, block.nonce)
