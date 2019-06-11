@@ -34,7 +34,7 @@ class BlockchainNode(Node.Node):
                          prev_block_hash, transaction_list: list, nonce: int):
                 '''
                 index : 
-                time_stamp : 불록아 생성된 time, time.time()을 아용해서 구한다. 
+                time_stamp : 불록이 생성된 time, time.time()을 이용해서 구한다. 
                 prev_block_hash : 이전 블록의 hash값
                 transaction_list : 블록이 가지고 있는 거래들. Block하나에 10개의 Transaction이 있어야 함
                 nonce : 채굴 과정에서 구한 정답 
@@ -153,16 +153,6 @@ class BlockchainNode(Node.Node):
 	while block.get_hash_val() > LEVEL:
 		block.nonce+=1
 	return True
-	'''
-	by rindid: 
-	1. 채굴작업 알고리즘을 지닌 func의 원형은 안보이는데 어디있는지? 일단 어떤 알고리즘을
-	쓰는지 몰라서 func에 proof와 block을 넣어두었다. 참고한 두 블록체인은 proof값을 
-	+1씩 하면서 hash값을 찾아 그 끝의 두자리 혹은 네자리가 0인 알고리즘을 사용하고 있더라.
-	2. 리턴할 값이 nonce값이 되어야하기에, get_hash_val함수를 사용하지 않았다.
-	get_hash_val함수를 사용하고 싶다면 block자체가 변경되기때문에 nonce값이 리턴되는게?
-	3. 뭘 가지고 proof를 검증할 것인가? 이전 block의 unique한 데이터 한개와 proof를 통해 
-	구하는 과정이 필요할거같다. 일단 block.prev_block_hash을 사용하였다.
-	'''
 
 
     # 아래의 함수들은 P2P네트워크의 도움이 필요한 함수들 == Node가 수행하는 함수겠지
