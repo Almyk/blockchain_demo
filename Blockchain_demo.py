@@ -147,27 +147,27 @@ class BlockchainNode(Node.Node):
         node에서 임의로 함수를 전달해서 채굴작업 알고리즘을 바꿀 수 있다.
         mine함수에서 호출되며, nonce값을 반환한다.
         '''
-		proof = 0
-		while func(block.prev_block_hash, proof) is False:
-			proof+=1
-		return proof
-		'''
-		by rindid: 
-		1. 채굴작업 알고리즘을 지닌 func의 원형은 안보이는데 어디있는지? 일단 어떤 알고리즘을
-		쓰는지 몰라서 func에 proof와 block을 넣어두었다. 참고한 두 블록체인은 proof값을 
-		+1씩 하면서 hash값을 찾아 그 끝의 두자리 혹은 네자리가 0인 알고리즘을 사용하고 있더라.
-		2. 리턴할 값이 nonce값이 되어야하기에, get_hash_val함수를 사용하지 않았다.
-		get_hash_val함수를 사용하고 싶다면 block자체가 변경되기때문에 nonce값이 리턴되는게?
-		3. 뭘 가지고 proof를 검증할 것인가? 이전 block의 unique한 데이터 한개와 proof를 통해 
-		구하는 과정이 필요할거같다. 일단 block.prev_block_hash을 사용하였다.
-		'''
+	proof = 0
+	while func(block.prev_block_hash, proof) is False:
+		proof+=1
+	return proof
+	'''
+	by rindid: 
+	1. 채굴작업 알고리즘을 지닌 func의 원형은 안보이는데 어디있는지? 일단 어떤 알고리즘을
+	쓰는지 몰라서 func에 proof와 block을 넣어두었다. 참고한 두 블록체인은 proof값을 
+	+1씩 하면서 hash값을 찾아 그 끝의 두자리 혹은 네자리가 0인 알고리즘을 사용하고 있더라.
+	2. 리턴할 값이 nonce값이 되어야하기에, get_hash_val함수를 사용하지 않았다.
+	get_hash_val함수를 사용하고 싶다면 block자체가 변경되기때문에 nonce값이 리턴되는게?
+	3. 뭘 가지고 proof를 검증할 것인가? 이전 block의 unique한 데이터 한개와 proof를 통해 
+	구하는 과정이 필요할거같다. 일단 block.prev_block_hash을 사용하였다.
+	'''
 	#이전 hash와 1씩 커지는 proof를 이용하여 마지막 두 자리가 00이 될 경우 true를 리턴.
 	#'답인 proof'=nonce이기 때문에, 
 	#valid_func(prev_block_hash, nonce)==true라는 결과가 나와야.
-	def valid_func(prev_hash, proof):
-		merge_proof=str(prev_hash)+str(proof)
-		merge_hash=hashlib.sha256(merge_proof.encode()).hexdigest()
-		return merge_hash[:2] == "00"
+    def valid_func(prev_hash, proof):
+	merge_proof=str(prev_hash)+str(proof)
+	merge_hash=hashlib.sha256(merge_proof.encode()).hexdigest()
+	return merge_hash[:2] == "00"
         
 
 
@@ -231,9 +231,9 @@ class BlockchainNode(Node.Node):
         검증에 통과하면 자신의 블록체인에 추가하고,
         검증에 실패하면 받은 block을 무시한다. (아무 행동도 하지 않는다.)
         '''
-      #  level = 0x000000100000
-      #  return (block.get_hash_val() < level) &&
+  	#  level = 0x000000100000
+  	#  return (block.get_hash_val() < level) &&
 	  
-	  # block에서 받은 prev_block_hash와 이전 블록의 hash값이 동일한지 확인? 
-	  # if(block.prev_block_hash == 이전블록.get_hash_val())
-		return func(block.prev_block_hash, block.nonce)
+   	# block에서 받은 prev_block_hash와 이전 블록의 hash값이 동일한지 확인? 
+  	# if(block.prev_block_hash == 이전블록.get_hash_val())
+	return func(block.prev_block_hash, block.nonce)
