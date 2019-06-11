@@ -2,7 +2,8 @@ import Node
 import json  # p2p네트워크로 이동되는 모든 데이터는 json이라 가정
 import time  # Block에 기록되는 time_stamp는 time.time()으로부터 구해짐
 import hashlib  # hashlib.sha256()
-
+from fastecdsa import ecdsa,keys,curve
+#https://pypi.org/project/fastecdsa/
 class BlockchainNode(Node.Node):
 
     class Transaction:
@@ -20,7 +21,7 @@ class BlockchainNode(Node.Node):
             self.sender = sender
             self.recipient = recipient
             self.item_histroy = item_history
-#            self.digital_signature =   생성필요
+            self.digital_signature = ecdsa.sign(sender+recipient+item_history, private_key)
             self.public_key = public_key
 
 
@@ -106,21 +107,22 @@ class BlockchainNode(Node.Node):
         '''
         개인키는 난수생성기를 통해 생성
         '''
-        pass
+        return keys.gen_private_key(curve.P256)
+
 
     @staticmethod
     def gen_public_key(private_key):
         '''
         개인키로부터 타원곡선암호화를 사용해서 생성
         '''
-        pass
-
+        return keys.get_public_key(private_key,curve.P256)
     @staticmethod
     def gen_node_address(public_key):
         '''
         노드 주소는 공개키로부터 해시함수를 사용해서 생성한다.
         '''
-        return hashlib.sha256(public_key).hexdigest()
+        string = str(public_key.x).encode() + str(public_key.y).encode()
+        return hashlib.sha256(string).hexdigest()
     
     
     def eventNodeMessage(self, node, data):
@@ -190,7 +192,10 @@ class BlockchainNode(Node.Node):
         검증에 통과하면 자신의 transaction pool에 저장하고,
         검증에 실패하면 받은 transaction을 무시한다. (아무 행동도 하지 않는다.)
         '''
-        pass
+        string = transaction.sender+transaction.recipient+transaction.item_history
+        valid = ecdsa.verify(transaction.digital_signature, string,transaction.public_key)
+
+        return valid
 
 
     def is_valid_block(self, block: Block) -> bool:
@@ -203,4 +208,6 @@ class BlockchainNode(Node.Node):
         검증에 통과하면 자신의 블록체인에 추가하고,
         검증에 실패하면 받은 block을 무시한다. (아무 행동도 하지 않는다.)
         '''
+        level = 0x000000100000
+        return (block.get_hash_val() < level) && 
         pass
