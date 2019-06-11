@@ -62,7 +62,7 @@ class BlockchainNode(Node.Node):
             self.chain = []
             # Create the genesis block
             # 임의의 genesis block을 생성해서 추가해줘야 한다..!
-            genesis_block = Block(0,time(),0,[],0)
+            genesis_block = Block(0,time.time(),0,[],0)
             self.append_block(genesis_block)
 
 
@@ -115,7 +115,7 @@ class BlockchainNode(Node.Node):
     @staticmethod
     def gen_public_key(private_key):
         '''
-        개인키로부터 타원곡선암호화를 사용해서 생성
+        개인키로부터 타원곡선암호화(ecdsa)를 사용해서 생성
         '''
         return keys.get_public_key(private_key,curve.P256)
     @staticmethod
@@ -132,7 +132,7 @@ class BlockchainNode(Node.Node):
         '''
         p2p네트워크로부터 온 json데이터를 data['Type']에 따라서 이벤트 헨들링 하는 method
         '''
-
+	# type : (None), node_propagation, peer_address, message
         type = data['Type']
 
         if type == 'transaction':
@@ -147,7 +147,7 @@ class BlockchainNode(Node.Node):
         '''
         작업증명 과정
         node에서 임의로 함수를 전달해서 채굴작업 알고리즘을 바꿀 수 있다.
-        mine함수에서 호출되며, nonce값을 반환한다.
+        mine함수에서 호출되며, 결과를 구하면 true값을 .
         '''
 	block.nonce = 0
 	while block.get_hash_val() > LEVEL:
@@ -164,8 +164,6 @@ class BlockchainNode(Node.Node):
         만일 다른 노드에서 먼저 Nonce를 전송했다면, 내가 하고있던 mine은 interrupted되고, 
         nonce를 먼저 구한 노드로부터 새로운 Block을 제공받음
         '''
-		#다른 node가 결과를 구했다는 interrupt가 들어오면 mine을 중간에 멈추게 하는 방식으로 구현할 것인지?
-		#그렇게 구현할려면 좀 복잡한 과정이 필요하지 않나?(파알못이라..)
         while len(self.transaction_pool) >= 10 :
             pass
         prev = self.blockchain.get_last_block()
@@ -228,4 +226,4 @@ class BlockchainNode(Node.Node):
    	# block에서 받은 prev_block_hash와 이전 블록의 hash값이 동일한지 확인? 
   	# if(block.prev_block_hash == 이전블록.get_hash_val())
         prev = self.blockchain.get_last_block()
-	return (prev.get_hash_val() == block.prev_block_hash )  and  (block.get_hash_val() < LEVEL)
+	return (block.prev_block_hash == 0 or prev.get_hash_val() == block.prev_block_hash )  and  (block.get_hash_val() < LEVEL)
