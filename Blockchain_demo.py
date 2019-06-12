@@ -21,7 +21,7 @@ class BlockchainNode(Node.Node):
             '''            
             self.sender = sender
             self.recipient = recipient
-            self.item_histroy = item_history
+            self.item_history = item_history
             self.digital_signature = ecdsa.sign(sender+recipient+item_history, private_key)
             self.public_key = public_key
 
@@ -189,6 +189,8 @@ class BlockchainNode(Node.Node):
         4. 생성된 Transaction을 P2P네트워크에 전파한다.
         '''
         new_transaction =Transaction(sender,receiver,data,self.private_key,self.public_key)
+
+
         #전파 필요
 
 
