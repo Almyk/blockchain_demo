@@ -134,7 +134,6 @@ class BlockchainNode(Node.Node):
         return hashlib.sha256(string).hexdigest()
 
     def eventNodeMessage(self, node, data):
-        # TODO: handle different kinds of communications between nodes here
         '''
         p2p네트워크로부터 온 json데이터를 data['Type']에 따라서 이벤트 헨들링 하는 method
         '''
@@ -151,7 +150,8 @@ class BlockchainNode(Node.Node):
             transaction.deserialize()
             if self.is_valid_transaction(transaction):
                 self.transaction_pool.append(transaction)
-                print("transaction is success!!")
+                print("A valid transaction was received:")
+                print(data)
 
         if type == 'new_block':
             # TODO
@@ -212,6 +212,15 @@ class BlockchainNode(Node.Node):
         prev = self.blockchain.get_last_block
         return (block.prev_block_hash == 0 or prev.get_hash_val() == block.prev_block_hash )  and  (block.get_hash_val() < LEVEL)
 
+    def start_mining(self):
+        self.miner.start()
+        print("%s started mining" % self.node_address)
+
+    def stop_mining(self):
+        self.miner.stop_mining()
+        self.miner.join()
+        print("%s stopped mining" % self.node_address)
+
 class Mine(threading.Thread):
     def __init__(self, blockchainNode):
         super(Mine, self).__init__()
@@ -253,3 +262,6 @@ class Mine(threading.Thread):
             if self.blockchainNode.blockchain.get_last_block.get_hash_val() is not block.prev_block_hash:
                 return False
         return True
+
+    def stop_mining(self):
+        self.should_terminate = True
