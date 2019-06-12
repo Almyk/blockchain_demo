@@ -29,14 +29,11 @@ class BlockchainNode(Node.Node):
             self.public_key = public_key
 
         def serialize(self):
-            self.digital_signature = str(self.digital_signature)
+            self.digital_signature = (str(self.digital_signature[0]),str(self.digital_signature[1]))
             self.public_key = (str(self.public_key.x),str(self.public_key.y))
 
         def deserialize(self):
-            temp = self.digital_signature.replace('(', '')
-            temp = temp.replace(')', '')
-            temp = [int(x) for x in temp.split(', ')]
-            self.digital_signature = tuple(temp)
+            self.digital_signature = (int(self.digital_signature[0]),int(self.digital_signature[1]))
             self.public_key = point.Point(int(self.public_key[0]),int(self.public_key[1]))
 
     class Blockchain:
@@ -44,7 +41,7 @@ class BlockchainNode(Node.Node):
         class Block:
             # Block의 생성자
             def __init__(self, index: int, time_stamp: float,
-                         prev_block_hash, transaction_list: list, nonce: int):
+                         prev_block_hash, transaction_list, nonce: int):
                 '''
                 index :
                 time_stamp : 불록이 생성된 time, time.time()을 이용해서 구한다.
@@ -55,7 +52,7 @@ class BlockchainNode(Node.Node):
                 self.index = index
                 self.time_stamp = time_stamp
                 self.prev_block_hash = prev_block_hash
-                self.transaction_list = transaction_list.copy()
+                self.transaction_list = transaction_list
                 self.nonce = nonce
 
             def get_hash_val(self):
@@ -65,6 +62,18 @@ class BlockchainNode(Node.Node):
                 merge_string = str(self.index) + str(self.time_stamp) + str(self.prev_block_hash) + str(self.transaction_list) + str(self.nonce)
 
                 return hashlib.sha256(merge_string.encode()).hexdigest()
+            def serialize(self):
+                temp = ''
+                for trans in self.transaction_list:
+                    temp += trans +','
+                temp = temp[0:-1]
+                self.transaction_list = str(temp)
+            def deserialize(self):
+                temp=[]
+                for trans in self.transaction_list.split(','):
+                    temp.append(trans)
+
+                self.transaction_list = temp
 
         # Blockchain의 생성자
         def __init__(self):
@@ -74,7 +83,7 @@ class BlockchainNode(Node.Node):
             self.chain = []
             # Create the genesis block
             # 임의의 genesis block을 생성해서 추가해줘야 한다..!
-            genesis_block = self.Block(0,time.time(),0,[],0)
+            genesis_block = self.Block(0,0,0,[],0)
             self.append_block(genesis_block)
 
         def resolve_conflicts(self):
@@ -137,7 +146,6 @@ class BlockchainNode(Node.Node):
         '''
         # type : (None), node_propagation, peer_address, message
         type = data['Type']
-
         if type == 'transaction':
             digital_signature = data['digital_signature']
             public_key = data['public_key']
@@ -147,16 +155,17 @@ class BlockchainNode(Node.Node):
             transaction = self.Transaction(sender, recipient, item_history, digital_signature, public_key)
             transaction.deserialize()
             if self.is_valid_transaction(transaction):
-                self.transaction_pool.append(transaction)
+                self.transaction_pool.append(transaction.item_history)
                 print("A valid transaction was received:")
-                print(data)
+                print(item_history)
 
         if type == 'new_block':
-            new_block = self.Blockchain.Block(data['index'],data['time_stamp'],data['prev_block_hash'],list(data['transaction_list']),int(data['nonce']))
-            if is_valid_block(new_block) is True:
-                self.blockchain.append_block(block)
+            new_block =self.Blockchain.Block(data['index'],data['time_stamp'],data['prev_block_hash'],data['transaction_list'],int(data['nonce']))
+            new_block.deserialize()
+            if self.is_valid_block(new_block) is True:
+                self.blockchain.append_block(new_block)
                 print("A valid block was received:")
-                print(data)
+                print(data['transaction_list'])
 
     def gen_transaction(self, sender: str, receiver: str, data: str):
         '''    
@@ -234,17 +243,20 @@ class Mine(threading.Thread):
         nonce를 먼저 구한 노드로부터 새로운 Block을 제공받음
         '''
         while (self.should_terminate == False):
-            while len(self.blockchainNode.transaction_pool) < 10:
+            while len(self.blockchainNode.transaction_pool) < 5:
                 time.sleep(2)
+            print("start")
             prev = self.blockchainNode.blockchain.get_last_block
             new_transaction = self.blockchainNode.transaction_pool[0:10]
             self.blockchainNode.transaction_pool = self.blockchainNode.transaction_pool[10:]
-            block = self.blockchainNode.Block(prev.index + 1, time.time(), prev.get_hash_val(), new_transaction, 0)
+            block = self.blockchainNode.Blockchain.Block(prev.index + 1, time.time(), prev.get_hash_val(), new_transaction, 0)
             if self.proof_of_work(block): # if hash puzzle is solved send block
+                block.serialize()
                 data = json.dumps(block.__dict__)
                 data = json.loads(data)
                 data['Type'] = 'new_block'
                 self.blockchainNode.sendAll(data)
+                block.deserialize()
 
     def proof_of_work(self,block) -> bool:
         '''
@@ -258,8 +270,9 @@ class Mine(threading.Thread):
             # 새로운 블럭이 추가됨
             if self.should_terminate:
                 return False
-            if self.blockchainNode.blockchain.get_last_block.get_hash_val() is not block.prev_block_hash:
+            if self.blockchainNode.blockchain.get_last_block.get_hash_val() != block.prev_block_hash:
                 return False
+        print(block.get_hash_val())
         return True
 
     def stop_mining(self):
