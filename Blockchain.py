@@ -26,7 +26,8 @@ class BlockchainNode(Node.Node):
             self.recipient = recipient
             self.item_history = item_history
             self.digital_signature = ecdsa.sign(sender+recipient+item_history, private_key)
-            self.public_key = public_key
+            self.digital_signature = str(self.digital_signature)
+            self.public_key = str(public_key)
 
     class Blockchain:
 
@@ -148,8 +149,8 @@ class BlockchainNode(Node.Node):
         4. 생성된 Transaction을 P2P네트워크에 전파한다.
         '''
         new_transaction = self.Transaction(sender,receiver,data,self.private_key,self.public_key)
-
         jdata = json.dumps(new_transaction.__dict__)
+        jdata = json.loads(jdata)
         jdata['Type'] = 'transaction'
         self.sendAll(jdata)
 
@@ -210,6 +211,7 @@ class Mine(threading.Thread):
             block = self.blockchainNode.Block(prev.index + 1, time.time(), prev.get_hash_val(), new_transaction, 0)
             if self.proof_of_work(block): # if hash puzzle is solved send block
                 data = json.dumps(block.__dict__)
+                data = json.loads(data)
                 data['Type'] = 'new_block'
                 self.blockchainNode.sendAll(data)
 
