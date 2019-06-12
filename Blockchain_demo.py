@@ -62,7 +62,7 @@ class BlockchainNode(Node.Node):
             self.chain = []
             # Create the genesis block
             # 임의의 genesis block을 생성해서 추가해줘야 한다..!
-            genesis_block = Block(0,time.time(),0,[],0)
+            genesis_block = self.Block(0,time.time(),0,[],0)
             self.append_block(genesis_block)
 
 
@@ -97,11 +97,11 @@ class BlockchainNode(Node.Node):
     # BlockchainNode의 생성자
     def __init__(self, host, port, callback=None):
         super(BlockchainNode, self).__init__(host, port, callback)
-        self.blockchain = Blockchain()
+        self.blockchain = self.Blockchain()
         self.transaction_pool = []
-        self.private_key = gen_private_key()
-        self.public_key = gen_public_key(self.private_key)
-        self.node_address = gen_node_address(self.public_key)
+        self.private_key = self.gen_private_key()
+        self.public_key = self.gen_public_key(self.private_key)
+        self.node_address = self.gen_node_address(self.public_key)
 
     def gen_private_key(self):
         '''
@@ -170,7 +170,7 @@ class BlockchainNode(Node.Node):
             prev = self.blockchain.get_last_block()
             new_transaction = self.transation_pool[0:10]
             self.transation_pool = self.transation_pool[10:]
-            block = Block(prev.index+1,time.time(),prev.get_hash_val(),new_transaction,0)
+            block = self.Block(prev.index+1,time.time(),prev.get_hash_val(),new_transaction,0)
             if proof_of_work(self,block) == True:
                 pass #p2p 전파
 
@@ -185,7 +185,7 @@ class BlockchainNode(Node.Node):
         3. Transaction에 공개키를 포함시킨다.
         4. 생성된 Transaction을 P2P네트워크에 전파한다.
         '''
-        new_transaction = Transaction(sender,receiver,data,self.private_key,self.public_key)
+        new_transaction = self.Transaction(sender,receiver,data,self.private_key,self.public_key)
 
 
         #전파 필요
