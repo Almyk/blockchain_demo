@@ -26,7 +26,6 @@ class BlockchainNode(Node.Node):
             self.recipient = recipient
             self.item_history = item_history
             self.digital_signature = ecdsa.sign(sender+recipient+item_history, private_key)
-            self.digital_signature = self.digital_signature
             self.public_key = public_key
 
         def serialize(self):
