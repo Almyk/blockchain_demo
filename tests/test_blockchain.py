@@ -18,7 +18,9 @@ node2.start()
 
 node1.connectToNode('localhost', port2)
 
+time.sleep(1)
 node1.gen_transaction(node1.node_address, node2.node_address, "falafel")
+time.sleep(1)
 
 node1.stop()
 node2.stop()

@@ -129,8 +129,11 @@ class Node(threading.Thread):
             #print("sent:", sent)  # TODO : this is only for debugging
 
     def sendToNode(self, node, data):
+        type = None
         try:
-            node.send(data)
+            if 'Type' in data.keys():
+                type = data['Type']
+            node.send(data, type)
 
         except Exception as e:
             self.dprint("Node.sendToNode: Error while sending data to node (%s) - (%s)" %(node.id, e))

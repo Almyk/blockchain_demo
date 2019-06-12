@@ -26,8 +26,17 @@ class BlockchainNode(Node.Node):
             self.recipient = recipient
             self.item_history = item_history
             self.digital_signature = ecdsa.sign(sender+recipient+item_history, private_key)
+            self.digital_signature = self.digital_signature
+            self.public_key = public_key
+
+        def serialize(self):
             self.digital_signature = str(self.digital_signature)
-            self.public_key = str(public_key)
+            self.public_key = str(self.public_key)
+            pass
+
+        def deserialize(self):
+            self.digital_signature = tuple(self.digital_signature)
+            pass
 
     class Blockchain:
 
@@ -149,9 +158,11 @@ class BlockchainNode(Node.Node):
         4. 생성된 Transaction을 P2P네트워크에 전파한다.
         '''
         new_transaction = self.Transaction(sender,receiver,data,self.private_key,self.public_key)
+        new_transaction.serialize()
         jdata = json.dumps(new_transaction.__dict__)
         jdata = json.loads(jdata)
         jdata['Type'] = 'transaction'
+        new_transaction.deserialize()
         self.sendAll(jdata)
 
     def get_blockchain_from_network(self):
