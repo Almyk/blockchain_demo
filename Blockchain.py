@@ -5,7 +5,7 @@ import time  # Block에 기록되는 time_stamp는 time.time()으로부터 구�
 import hashlib  # hashlib.sha256()
 from fastecdsa import ecdsa,keys,curve,point
 # https://pypi.org/project/fastecdsa/
-LEVEL = "0000001"
+LEVEL = "01"
 
 
 class BlockchainNode(Node.Node):
@@ -236,7 +236,7 @@ class Mine(threading.Thread):
         '''
         while (self.should_terminate == False):
             while len(self.blockchainNode.transaction_pool) < 10:
-                pass
+                time.sleep(2)
             prev = self.blockchainNode.blockchain.get_last_block
             new_transaction = self.blockchainNode.transaction_pool[0:10]
             self.blockchainNode.transaction_pool = self.blockchainNode.transaction_pool[10:]
