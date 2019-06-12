@@ -3,7 +3,7 @@ import threading
 import json  # p2p네트워크로 이동되는 모든 데이터는 json이라 가정
 import time  # Block에 기록되는 time_stamp는 time.time()으로부터 구해짐
 import hashlib  # hashlib.sha256()
-from fastecdsa import ecdsa,keys,curve
+from fastecdsa import ecdsa,keys,curve.point
 # https://pypi.org/project/fastecdsa/
 LEVEL = "0000001"
 
@@ -30,11 +30,12 @@ class BlockchainNode(Node.Node):
 
         def serialize(self):
             self.digital_signature = str(self.digital_signature)
-            self.public_key = str(self.public_key)
+            self.public_key = (str(self.public_key.x),str(self.public_key.y))
             pass
 
         def deserialize(self):
             self.digital_signature = tuple(self.digital_signature)
+            self.public_key = point.Point(int(self.public_key[0]),int(self.public_key[1])
             pass
 
     class Blockchain:
