@@ -31,7 +31,6 @@ class BlockchainNode(Node.Node):
         def serialize(self):
             self.digital_signature = str(self.digital_signature)
             self.public_key = (str(self.public_key.x),str(self.public_key.y))
-            pass
 
         def deserialize(self):
             temp = self.digital_signature.replace('(', '')
@@ -39,7 +38,6 @@ class BlockchainNode(Node.Node):
             temp = [int(x) for x in temp.split(', ')]
             self.digital_signature = tuple(temp)
             self.public_key = point.Point(int(self.public_key[0]),int(self.public_key[1]))
-            pass
 
     class Blockchain:
 
@@ -154,10 +152,11 @@ class BlockchainNode(Node.Node):
                 print(data)
 
         if type == 'new_block':
-            # TODO
-            print(data)
-            pass
-        pass
+            new_block = self.Blockchain.Block(data['index'],data['time_stamp'],data['prev_block_hash'],list(data['transaction_list']),int(data['nonce']))
+            if is_valid_block(new_block) is True:
+                self.blockchain.append_block(block)
+                print("A valid block was received:")
+                print(data)
 
     def gen_transaction(self, sender: str, receiver: str, data: str):
         '''    
