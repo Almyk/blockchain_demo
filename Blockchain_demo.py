@@ -188,7 +188,7 @@ class BlockchainNode(Node.Node):
         3. Transaction에 공개키를 포함시킨다.
         4. 생성된 Transaction을 P2P네트워크에 전파한다.
         '''
-        new_transaction =Transaction(sender,receiver,data,private_key,public_key)
+        new_transaction =Transaction(sender,receiver,data,self.private_key,self.public_key)
         #전파 필요
 
 
@@ -226,10 +226,5 @@ class BlockchainNode(Node.Node):
         검증에 통과하면 자신의 블록체인에 추가하고,
         검증에 실패하면 받은 block을 무시한다. (아무 행동도 하지 않는다.)
         '''
-  	#  level = 0x000000100000
-  	#  return (block.get_hash_val() < level) &&
-	  
-   	# block에서 받은 prev_block_hash와 이전 블록의 hash값이 동일한지 확인? 
-  	# if(block.prev_block_hash == 이전블록.get_hash_val())
         prev = self.blockchain.get_last_block()
 	return (block.prev_block_hash == 0 or prev.get_hash_val() == block.prev_block_hash )  and  (block.get_hash_val() < LEVEL)
