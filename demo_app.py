@@ -1,3 +1,4 @@
+import Blockchain
 from tkinter import *
 from tkinter import messagebox
 from PIL import ImageTk, Image
@@ -29,6 +30,9 @@ def stop_mining():
 def view_history():
     # TODO: popup that shows the block history, scrollable window
     pass
+
+# TODO
+node = Blockchain()
 
 root = Tk()
 root.title("Sogang Blockcoin")

@@ -3,7 +3,7 @@ import threading
 import json  # p2p네트워크로 이동되는 모든 데이터는 json이라 가정
 import time  # Block에 기록되는 time_stamp는 time.time()으로부터 구해짐
 import hashlib  # hashlib.sha256()
-from fastecdsa import ecdsa,keys,curve.point
+from fastecdsa import ecdsa,keys,curve,point
 # https://pypi.org/project/fastecdsa/
 LEVEL = "0000001"
 
@@ -12,7 +12,7 @@ class BlockchainNode(Node.Node):
 
     class Transaction:
         # Transaction의 생성자
-        def __init__(self, sender: str, recipient: str, item_history: str,private_key,public_key):
+        def __init__(self, sender: str, recipient: str, item_history: str, digital_signature, public_key):
             '''
             sender : 보내는 사람의 URL
             recipient : 받는 사람의 URL
@@ -25,7 +25,7 @@ class BlockchainNode(Node.Node):
             self.sender = sender
             self.recipient = recipient
             self.item_history = item_history
-            self.digital_signature = ecdsa.sign(sender+recipient+item_history, private_key)
+            self.digital_signature = digital_signature
             self.public_key = public_key
 
         def serialize(self):
@@ -34,8 +34,11 @@ class BlockchainNode(Node.Node):
             pass
 
         def deserialize(self):
-            self.digital_signature = tuple(self.digital_signature)
-            self.public_key = point.Point(int(self.public_key[0]),int(self.public_key[1])
+            temp = self.digital_signature.replace('(', '')
+            temp = temp.replace(')', '')
+            temp = [int(x) for x in temp.split(', ')]
+            self.digital_signature = tuple(temp)
+            self.public_key = point.Point(int(self.public_key[0]),int(self.public_key[1]))
             pass
 
     class Blockchain:
@@ -139,9 +142,17 @@ class BlockchainNode(Node.Node):
         type = data['Type']
 
         if type == 'transaction':
-            # TODO
-            print(data)
-            pass
+            digital_signature = data['digital_signature']
+            public_key = data['public_key']
+            sender = data['sender']
+            recipient = data['recipient']
+            item_history = data['item_history']
+            transaction = self.Transaction(sender, recipient, item_history, digital_signature, public_key)
+            transaction.deserialize()
+            if self.is_valid_transaction(transaction):
+                self.transaction_pool.append(transaction)
+                print("transaction is success!!")
+
         if type == 'new_block':
             # TODO
             print(data)
@@ -157,7 +168,8 @@ class BlockchainNode(Node.Node):
         3. Transaction에 공개키를 포함시킨다.
         4. 생성된 Transaction을 P2P네트워크에 전파한다.
         '''
-        new_transaction = self.Transaction(sender,receiver,data,self.private_key,self.public_key)
+        digital_signature = ecdsa.sign(sender + receiver + data, self.private_key)
+        new_transaction = self.Transaction(sender,receiver,data,digital_signature,self.public_key)
         new_transaction.serialize()
         jdata = json.dumps(new_transaction.__dict__)
         jdata = json.loads(jdata)
