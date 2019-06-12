@@ -143,7 +143,7 @@ class BlockchainNode(Node.Node):
 
         
     # 아래의 method들은 네트워크의 도움이 필요하다.
-    def proof_of_work(block) -> bool:
+    def proof_of_work(self,block) -> bool:
         '''
         작업증명 과정
         node에서 임의로 함수를 전달해서 채굴작업 알고리즘을 바꿀 수 있다.
@@ -152,6 +152,9 @@ class BlockchainNode(Node.Node):
 	block.nonce = 0
 	while block.get_hash_val() > LEVEL:
 		block.nonce+=1
+                #새로운 블럭이 추가됨
+                if self.blockchain.get_last_block().get_hash_val() is not block.prev_block_hash:
+                    return False
 	return True
 
 
@@ -164,13 +167,16 @@ class BlockchainNode(Node.Node):
         만일 다른 노드에서 먼저 Nonce를 전송했다면, 내가 하고있던 mine은 interrupted되고, 
         nonce를 먼저 구한 노드로부터 새로운 Block을 제공받음
         '''
-        while len(self.transaction_pool) >= 10 :
-            pass
-        prev = self.blockchain.get_last_block()
-        new_transaction = self.transation_pool[0:10]
-        self.transation_pool = self.transation_pool[10:]
-        block = Block(prev.index+1,time.time(),prev.get_hash_val(),new_transaction,0)
-        proof_of_work(block)
+        while(True):
+            while len(self.transaction_pool) >= 10 :
+                pass
+            prev = self.blockchain.get_last_block()
+            new_transaction = self.transation_pool[0:10]
+            self.transation_pool = self.transation_pool[10:]
+            block = Block(prev.index+1,time.time(),prev.get_hash_val(),new_transaction,0)
+            if proof_of_work(self,block) == True:
+                pass #p2p 전파
+
 
 
     def gen_transaction(self, sender: str, receiver: str, data: str):
