@@ -150,7 +150,7 @@ class BlockchainNode(Node.Node):
 	while block.get_hash_val() > LEVEL:
 		block.nonce+=1
                 #새로운 블럭이 추가됨
-                if self.blockchain.get_last_block().get_hash_val() is not block.prev_block_hash:
+                if self.blockchain.get_last_block.get_hash_val() is not block.prev_block_hash:
                     return False
 	return True
 
@@ -167,11 +167,11 @@ class BlockchainNode(Node.Node):
         while(True):
             while len(self.transaction_pool) >= 10 :
                 pass
-            prev = self.blockchain.get_last_block()
+            prev = self.blockchain.get_last_block
             new_transaction = self.transation_pool[0:10]
             self.transation_pool = self.transation_pool[10:]
             block = self.Block(prev.index+1,time.time(),prev.get_hash_val(),new_transaction,0)
-            if proof_of_work(self,block) == True:
+            if self.proof_of_work(self,block) == True:
                 pass #p2p 전파
 
 
@@ -190,13 +190,11 @@ class BlockchainNode(Node.Node):
 
         #전파 필요
 
-
     def get_blockchain_from_network(self):
         '''
         P2P네트워크로부터 최신의 블록체인을 json형태로 모두 받아옴
         '''
         pass
-
 
     def is_valid_transaction (self, transaction: Transaction) -> bool:
         '''
@@ -215,7 +213,7 @@ class BlockchainNode(Node.Node):
         return valid
 
 
-    def is_valid_block(self, block: Block) -> bool:
+    def is_valid_block(self, block: Blockchain.Block) -> bool:
         '''
         블록 내부에 존재하는 nonce와 이전의 블록을 통해서 정답이 맞는지 검증한다.
         정답인 경우 return True
@@ -225,5 +223,5 @@ class BlockchainNode(Node.Node):
         검증에 통과하면 자신의 블록체인에 추가하고,
         검증에 실패하면 받은 block을 무시한다. (아무 행동도 하지 않는다.)
         '''
-        prev = self.blockchain.get_last_block()
+        prev = self.blockchain.get_last_block
         return (block.prev_block_hash == 0 or prev.get_hash_val() == block.prev_block_hash )  and  (block.get_hash_val() < LEVEL)
