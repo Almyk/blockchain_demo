@@ -4,8 +4,10 @@ import json  # p2p네트워크로 이동되는 모든 데이터는 json이라 �
 import time  # Block에 기록되는 time_stamp는 time.time()으로부터 구해짐
 import hashlib  # hashlib.sha256()
 from fastecdsa import ecdsa,keys,curve
-#https://pypi.org/project/fastecdsa/
+# https://pypi.org/project/fastecdsa/
 LEVEL = "0000001"
+
+
 class BlockchainNode(Node.Node):
 
     class Transaction:
@@ -123,7 +125,7 @@ class BlockchainNode(Node.Node):
         '''
         p2p네트워크로부터 온 json데이터를 data['Type']에 따라서 이벤트 헨들링 하는 method
         '''
-	# type : (None), node_propagation, peer_address, message
+        # type : (None), node_propagation, peer_address, message
         type = data['Type']
 
         if type == 'transaction':
@@ -132,26 +134,9 @@ class BlockchainNode(Node.Node):
             pass
         if type == 'new_block':
             # TODO
+            print(data)
             pass
         pass
-
-    # 아래의 method들은 네트워크의 도움이 필요하다.
-    def proof_of_work(self,block) -> bool:
-        '''
-        작업증명 과정
-        node에서 임의로 함수를 전달해서 채굴작업 알고리즘을 바꿀 수 있다.
-        mine함수에서 호출되며, 결과를 구하면 true값을 .
-        '''
-	block.nonce = 0
-	while block.get_hash_val() > LEVEL:
-		block.nonce+=1
-                #새로운 블럭이 추가됨
-                if self.blockchain.get_last_block.get_hash_val() is not block.prev_block_hash:
-                    return False
-	return True
-
-
-    # 아래의 함수들은 P2P네트워크의 도움이 필요한 함수들 == Node가 수행하는 함수겠지
 
     def gen_transaction(self, sender: str, receiver: str, data: str):
         '''    
@@ -217,12 +202,29 @@ class Mine(threading.Thread):
         nonce를 먼저 구한 노드로부터 새로운 Block을 제공받음
         '''
         while (self.should_terminate == False):
-            while len(self.transaction_pool) < 10:
+            while len(self.blockchainNode.transaction_pool) < 10:
                 pass
             prev = self.blockchainNode.blockchain.get_last_block
             new_transaction = self.blockchainNode.transaction_pool[0:10]
             self.blockchainNode.transaction_pool = self.blockchainNode.transaction_pool[10:]
             block = self.blockchainNode.Block(prev.index + 1, time.time(), prev.get_hash_val(), new_transaction, 0)
-            if self.blockchainNode.proof_of_work(self, block) == True:
+            if self.proof_of_work(block): # if hash puzzle is solved send block
                 data = json.dumps(block.__dict__)
+                data['Type'] = 'new_block'
                 self.blockchainNode.sendAll(data)
+
+    def proof_of_work(self,block) -> bool:
+        '''
+        작업증명 과정
+        node에서 임의로 함수를 전달해서 채굴작업 알고리즘을 바꿀 수 있다.
+        mine함수에서 호출되며, 결과를 구하면 true값을 .
+        '''
+        block.nonce = 0
+        while block.get_hash_val() > LEVEL:
+            block.nonce+=1
+            # 새로운 블럭이 추가됨
+            if self.should_terminate:
+                return False
+            if self.blockchainNode.blockchain.get_last_block.get_hash_val() is not block.prev_block_hash:
+                return False
+        return True
