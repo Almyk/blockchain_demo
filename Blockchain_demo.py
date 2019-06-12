@@ -103,23 +103,20 @@ class BlockchainNode(Node.Node):
         self.public_key = gen_public_key(self.private_key)
         self.node_address = gen_node_address(self.public_key)
 
-
-    @staticmethod
-    def gen_private_key():
+    def gen_private_key(self):
         '''
         개인키는 난수생성기를 통해 생성
         '''
         return keys.gen_private_key(curve.P256)
 
 
-    @staticmethod
-    def gen_public_key(private_key):
+    def gen_public_key(self, private_key):
         '''
         개인키로부터 타원곡선암호화(ecdsa)를 사용해서 생성
         '''
         return keys.get_public_key(private_key,curve.P256)
-    @staticmethod
-    def gen_node_address(public_key):
+
+    def gen_node_address(self, public_key):
         '''
         노드 주소는 공개키로부터 해시함수를 사용해서 생성한다.
         '''
@@ -188,7 +185,7 @@ class BlockchainNode(Node.Node):
         3. Transaction에 공개키를 포함시킨다.
         4. 생성된 Transaction을 P2P네트워크에 전파한다.
         '''
-        new_transaction =Transaction(sender,receiver,data,self.private_key,self.public_key)
+        new_transaction = Transaction(sender,receiver,data,self.private_key,self.public_key)
 
 
         #전파 필요
@@ -229,4 +226,4 @@ class BlockchainNode(Node.Node):
         검증에 실패하면 받은 block을 무시한다. (아무 행동도 하지 않는다.)
         '''
         prev = self.blockchain.get_last_block()
-	return (block.prev_block_hash == 0 or prev.get_hash_val() == block.prev_block_hash )  and  (block.get_hash_val() < LEVEL)
+        return (block.prev_block_hash == 0 or prev.get_hash_val() == block.prev_block_hash )  and  (block.get_hash_val() < LEVEL)
