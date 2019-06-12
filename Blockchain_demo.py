@@ -1,4 +1,5 @@
 import Node
+import threading
 import json  # p2p네트워크로 이동되는 모든 데이터는 json이라 가정
 import time  # Block에 기록되는 time_stamp는 time.time()으로부터 구해짐
 import hashlib  # hashlib.sha256()
@@ -18,33 +19,31 @@ class BlockchainNode(Node.Node):
             public_key : sender의 공개키, 나중에 transaction검증할 때 사용함
 
             *********나중에 digital_signature, public_key type이 정해지면 민우한테 꼭 알리기*************
-            '''            
+            '''
             self.sender = sender
             self.recipient = recipient
             self.item_history = item_history
             self.digital_signature = ecdsa.sign(sender+recipient+item_history, private_key)
             self.public_key = public_key
 
-
     class Blockchain:
 
         class Block:
             # Block의 생성자
-            def __init__(self, index: int, time_stamp: float, 
+            def __init__(self, index: int, time_stamp: float,
                          prev_block_hash, transaction_list: list, nonce: int):
                 '''
-                index : 
-                time_stamp : 불록이 생성된 time, time.time()을 이용해서 구한다. 
+                index :
+                time_stamp : 불록이 생성된 time, time.time()을 이용해서 구한다.
                 prev_block_hash : 이전 블록의 hash값
                 transaction_list : 블록이 가지고 있는 거래들. Block하나에 10개의 Transaction이 있어야 함
-                nonce : 채굴 과정에서 구한 정답 
+                nonce : 채굴 과정에서 구한 정답
                 '''
                 self.index = index
                 self.time_stamp = time_stamp
                 self.prev_block_hash = prev_block_hash
                 self.transaction_list = transaction_list.copy()
                 self.nonce = nonce
-
 
             def get_hash_val(self):
                 '''
@@ -65,7 +64,6 @@ class BlockchainNode(Node.Node):
             genesis_block = self.Block(0,time.time(),0,[],0)
             self.append_block(genesis_block)
 
-
         def resolve_conflicts(self):
             """
             This is our consensus algorithm, it resolves conflicts
@@ -76,15 +74,13 @@ class BlockchainNode(Node.Node):
             """
             pass
 
-
         def append_block(self,block: Block):
             '''
             이 함수를 호출하기 전에,
             is_valid_block가 먼저 호출되어야 한다. (예외, genesis 블록 추가할 때는 ㄱㅊ)
-            블록체인에 
+            블록체인에
             '''
             self.chain.append(block)
-
 
         @property
         def get_last_block(self) -> Block:
@@ -92,7 +88,6 @@ class BlockchainNode(Node.Node):
             블록 체인에서 가장 최근에 만들어진 블록을 반환한다.
             '''
             return self.chain[-1]
-
 
     # BlockchainNode의 생성자
     def __init__(self, host, port, callback=None):
@@ -102,13 +97,13 @@ class BlockchainNode(Node.Node):
         self.private_key = self.gen_private_key()
         self.public_key = self.gen_public_key(self.private_key)
         self.node_address = self.gen_node_address(self.public_key)
+        self.miner = Mine(self)
 
     def gen_private_key(self):
         '''
         개인키는 난수생성기를 통해 생성
         '''
         return keys.gen_private_key(curve.P256)
-
 
     def gen_public_key(self, private_key):
         '''
@@ -122,8 +117,7 @@ class BlockchainNode(Node.Node):
         '''
         string = str(public_key.x).encode() + str(public_key.y).encode()
         return hashlib.sha256(string).hexdigest()
-    
-    
+
     def eventNodeMessage(self, node, data):
         # TODO: handle different kinds of communications between nodes here
         '''
@@ -133,12 +127,14 @@ class BlockchainNode(Node.Node):
         type = data['Type']
 
         if type == 'transaction':
+            # TODO
+            print(data)
             pass
         if type == 'new_block':
+            # TODO
             pass
         pass
 
-        
     # 아래의 method들은 네트워크의 도움이 필요하다.
     def proof_of_work(self,block) -> bool:
         '''
@@ -157,25 +153,6 @@ class BlockchainNode(Node.Node):
 
     # 아래의 함수들은 P2P네트워크의 도움이 필요한 함수들 == Node가 수행하는 함수겠지
 
-    def mine(self):
-        '''
-        transaction pool에 Transaction이 10개 이상 쌓이면,
-        pool에서 Transaction 10개를 가지고 Block생성한 다음, Nonce를 구하면, 네트워크로 전송
-        만일 다른 노드에서 먼저 Nonce를 전송했다면, 내가 하고있던 mine은 interrupted되고, 
-        nonce를 먼저 구한 노드로부터 새로운 Block을 제공받음
-        '''
-        while(True):
-            while len(self.transaction_pool) >= 10 :
-                pass
-            prev = self.blockchain.get_last_block
-            new_transaction = self.transation_pool[0:10]
-            self.transation_pool = self.transation_pool[10:]
-            block = self.Block(prev.index+1,time.time(),prev.get_hash_val(),new_transaction,0)
-            if self.proof_of_work(self,block) == True:
-                pass #p2p 전파
-
-
-
     def gen_transaction(self, sender: str, receiver: str, data: str):
         '''    
         새로운 거래를 생성하는 함수
@@ -187,8 +164,9 @@ class BlockchainNode(Node.Node):
         '''
         new_transaction = self.Transaction(sender,receiver,data,self.private_key,self.public_key)
 
-
-        #전파 필요
+        jdata = json.dumps(new_transaction.__dict__)
+        jdata['Type'] = 'transaction'
+        self.sendAll(jdata)
 
     def get_blockchain_from_network(self):
         '''
@@ -212,7 +190,6 @@ class BlockchainNode(Node.Node):
 
         return valid
 
-
     def is_valid_block(self, block: Blockchain.Block) -> bool:
         '''
         블록 내부에 존재하는 nonce와 이전의 블록을 통해서 정답이 맞는지 검증한다.
@@ -225,3 +202,27 @@ class BlockchainNode(Node.Node):
         '''
         prev = self.blockchain.get_last_block
         return (block.prev_block_hash == 0 or prev.get_hash_val() == block.prev_block_hash )  and  (block.get_hash_val() < LEVEL)
+
+class Mine(threading.Thread):
+    def __init__(self, blockchainNode):
+        super(Mine, self).__init__()
+        self.should_terminate = False
+        self.blockchainNode = blockchainNode
+
+    def run(self):
+        '''
+        transaction pool에 Transaction이 10개 이상 쌓이면,
+        pool에서 Transaction 10개를 가지고 Block생성한 다음, Nonce를 구하면, 네트워크로 전송
+        만일 다른 노드에서 먼저 Nonce를 전송했다면, 내가 하고있던 mine은 interrupted되고,
+        nonce를 먼저 구한 노드로부터 새로운 Block을 제공받음
+        '''
+        while (self.should_terminate == False):
+            while len(self.transaction_pool) < 10:
+                pass
+            prev = self.blockchainNode.blockchain.get_last_block
+            new_transaction = self.blockchainNode.transaction_pool[0:10]
+            self.blockchainNode.transaction_pool = self.blockchainNode.transaction_pool[10:]
+            block = self.blockchainNode.Block(prev.index + 1, time.time(), prev.get_hash_val(), new_transaction, 0)
+            if self.blockchainNode.proof_of_work(self, block) == True:
+                data = json.dumps(block.__dict__)
+                self.blockchainNode.sendAll(data)
