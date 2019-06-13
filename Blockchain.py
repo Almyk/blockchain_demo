@@ -214,6 +214,44 @@ class BlockchainNode(Node.Node):
             if self.callback != None:
                 self.callback("update_transaction_pool", self, node, {'pool': self.transaction_pool})
 
+        elif type == 'ask_chain':
+            host, port = data['Address']
+
+            allnodes = self.getAllNodes()
+            for node in allnodes:
+                rcv_port = node.port
+                rcv_host = node.host
+                if host == rcv_host and port == rcv_port:
+                    blk_dic = {}
+                    i = 0
+                    for block in self.blockchain.chain:
+                        block.serialize()
+                        temp = json.dumps(block.__dict__)
+                        temp = json.loads(temp)
+                        block.deserialize()
+                        blk_dic[i] = temp
+                        i += 1
+                    blk_dic['Type'] = 'give_blockchain'
+                    self.sendToNode(node, blk_dic)
+                    break
+
+        elif type == 'give_blockchain':
+            print("received chain:", data)
+            blk_chain = []
+            for k, v in data.items():
+                if not k.isdigit():
+                    continue
+                new_block = self.Blockchain.Block(v['index'], v['time_stamp'], v['prev_block_hash'],
+                                                  v['transaction_list'], int(v['nonce']))
+                new_block.deserialize()
+                blk_chain.append(new_block)
+            self.blockchain.chain = blk_chain
+
+
+
+
+            # self.blockchain.chain = data['chain']
+
 
     def gen_transaction(self, sender: str, receiver: str, data: str):
         '''    
@@ -330,11 +368,18 @@ class BlockchainNode(Node.Node):
                 self.sendToNode(node, {'Type': 'ask_transaction_pool', 'Address': (self.host, self.port)})
                 break
 
+    def ask_for_blockchain(self):
+        for node in self.nodesOut:
+            if not node.shouldTerminate:
+                self.sendToNode(node, {'Type': 'ask_chain', 'Address': (self.host, self.port)})
+                break
+
     def join_network(self, host, port):
         self.connectToNode(host, port)
         time.sleep(0.1)
         self.ask_for_mine_count()
         self.ask_for_transaction_pool()
+        self.ask_for_blockchain()
         time.sleep(0.1)
 
 class Mine(threading.Thread):
