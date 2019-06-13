@@ -53,14 +53,11 @@ port = random.randint(1111,9999)
 host = 'localhost'
 node = Blockchain.BlockchainNode(host, port, eventCallback)
 node.start()
-node.connectToNode(host, 888)
-time.sleep(1)
-node.ask_for_mine_count()
-time.sleep(2)
+node.join_network(host, 888)
 
 
 root = Tk()
-root.title("Sogang Blockcoin")
+root.title("Sogang HalalChain")
 root.configure(background="black")
 root.resizable(0, 0)
 

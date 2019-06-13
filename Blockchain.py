@@ -304,6 +304,11 @@ class BlockchainNode(Node.Node):
                 self.sendToNode(node, {'Type': 'ask_mine_count', 'Address': (self.host, self.port)})
                 break
 
+    def join_network(self, host, port):
+        self.connectToNode(host, port)
+        time.sleep(0.5)
+        self.ask_for_mine_count()
+
 class Mine(threading.Thread):
     def __init__(self, blockchainNode):
         super(Mine, self).__init__()
