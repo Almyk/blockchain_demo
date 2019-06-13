@@ -3,6 +3,12 @@ from tkinter import *
 from tkinter import messagebox
 from PIL import ImageTk, Image
 import time
+import random
+
+def quit_app():
+    node.stop()
+    node.join()
+    root.quit()
 
 
 def generate_key():
@@ -42,11 +48,11 @@ def view_history():
 def eventCallback(event, server, node, data=None):
     pass
 # create blockchain node
-port = 666
+port = random.randint(1111,9999)
 host = 'localhost'
 node = Blockchain.BlockchainNode(host, port, eventCallback)
 node.start()
-node.connectToNode(host, 888)
+node.connectToNode(host, 889)
 
 root = Tk()
 root.title("Sogang Blockcoin")
@@ -70,7 +76,7 @@ bk_image = ImageTk.PhotoImage(bk_image)
 canvas.create_image(width/2,height/2, image=bk_image)
 
 # add quit button
-quit_button = Button(root, text="Quit", command=root.quit, anchor=W, fg='white',
+quit_button = Button(root, text="Quit", command=quit_app, anchor=W, fg='white',
                      width=10, activebackground="#33B5E5", highlightbackground="#666")
 canvas.create_window(10, 10, anchor=NW, window=quit_button)
 

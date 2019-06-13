@@ -293,6 +293,7 @@ class Mine(threading.Thread):
         self.is_mining = True
         while (self.should_terminate == False):
             while len(self.blockchainNode.transaction_pool) < 10:
+                time.sleep(2)
                 if self.should_terminate:
                     return
             prev = self.blockchainNode.blockchain.get_last_block
