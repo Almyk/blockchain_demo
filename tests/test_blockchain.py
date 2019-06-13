@@ -27,10 +27,10 @@ node3.start()
 node4.start()
 node5.start()
 
-node1.connectToNode('localhost', port2)
-node1.connectToNode('localhost', port3)
-node1.connectToNode('localhost', port4)
-node1.connectToNode('localhost', port5)
+node1.join_network('localhost', port2)
+node1.join_network('localhost', port3)
+node1.join_network('localhost', port4)
+node1.join_network('localhost', port5)
 
 # time.sleep(5)
 

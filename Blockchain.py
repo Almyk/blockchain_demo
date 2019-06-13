@@ -325,10 +325,10 @@ class BlockchainNode(Node.Node):
 
     def join_network(self, host, port):
         self.connectToNode(host, port)
-        time.sleep(0.5)
+        time.sleep(0.1)
         self.ask_for_mine_count()
         self.ask_for_transaction_pool()
-        time.sleep(0.5)
+        time.sleep(0.1)
 
 class Mine(threading.Thread):
     def __init__(self, blockchainNode):
