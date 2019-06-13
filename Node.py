@@ -295,11 +295,12 @@ class NodeConnection(threading.Thread):
 
             except Exception as e:
                 # terminate Node if there is an issue with the connection
-                self.shouldTerminate = True
+                # self.shouldTerminate =
+                pass
 
             if message != "":
                 if message == {}:  # an empty dict is received when peer node is closed
-                    self.shouldTerminate = True
+                    # self.shouldTerminate = True
                     continue
 
                 # Get messages one by one using seperator -SEP
@@ -333,6 +334,7 @@ class NodeConnection(threading.Thread):
 
                     idx = self.buffer.find("-SEP")
             time.sleep(0.1)
+        print("A client node stopped: %s" % self.server.getName())
 
         self.sock.settimeout(None)
         self.sock.close()
