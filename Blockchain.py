@@ -194,6 +194,8 @@ class BlockchainNode(Node.Node):
 
         elif type == 'miner_count':
             self.miner_count = data['count']
+            if self.callback != None:
+                self.callback("update_miner_count", self, node, {'count': self.miner_count})
 
         elif type == 'ask_transaction_pool':
             host, port = data['Address']
@@ -208,6 +210,9 @@ class BlockchainNode(Node.Node):
 
         elif type == 'transaction_pool':
             self.transaction_pool = data['pool']
+            if self.callback != None:
+                self.callback("update_transaction_pool", self, node, {'pool': self.transaction_pool})
+
 
     def gen_transaction(self, sender: str, receiver: str, data: str):
         '''    
@@ -293,6 +298,7 @@ class BlockchainNode(Node.Node):
             self.sendAll({'Type': 'retired_miner'})
 
     def get_unique_node_count(self):
+        self.removeClosedConnections()
         allnodes = self.getAllNodes()
 
         unique_nodes = dict()

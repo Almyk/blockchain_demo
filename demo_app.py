@@ -23,6 +23,12 @@ def load_key():
     messagebox.showinfo("Load Key", "To be implemented ;) ")
     pass
 
+def update_all():
+    update_transaction_pool()
+    update_miner()
+    update_user()
+    pass
+
 
 def make_transaction():
     # TODO: popup where you set receiver, using public key, and determine amount to send
@@ -47,14 +53,40 @@ def view_history():
 
 
 def eventCallback(event, server, node, data=None):
-    pass
-# create blockchain node
-port = random.randint(1111,9999)
-host = 'localhost'
-node = Blockchain.BlockchainNode(host, port, eventCallback)
-node.start()
-node.join_network(host, 888)
-print(node.transaction_pool)
+    if event == "NODE_CONNECTED":
+        # TODO update user count
+        pass
+    elif event == "update_transaction_pool":
+        # TODO update transaction pool
+        print("update transaction pool")
+        update_transaction_pool()
+
+        pass
+    elif event == "update_miner_count":
+        # TODO update miner count
+        pass
+
+
+def update_transaction_pool():
+    curr_trans_box.delete(0.0, END)
+    trans_str = ""
+    for transaction in node.transaction_pool:
+        trans_str += transaction + '\n'
+
+    curr_trans_box.insert(END, trans_str)
+
+
+def update_miner():
+    miner_count.delete(0.0, END)
+    node.ask_for_mine_count()
+    count = str(node.miner_count)
+    miner_count.insert(END, count)
+
+
+def update_user():
+    user_count.delete(0.0, END)
+    count = str(node.get_unique_node_count())
+    user_count.insert(END, count)
 
 
 root = Tk()
@@ -90,10 +122,15 @@ gen_key_btn = Button(root, text="Generate Key", command=generate_key, anchor=W, 
                      width=10, activebackground="#33B5E5", highlightbackground="#666")
 canvas.create_window(10, temp_y, anchor=NW, window=gen_key_btn)
 
+# # load key button
+# load_key_btn = Button(root, text="Load Key", command=load_key, anchor=W, fg='white',
+#                       width=10, activebackground="#33B5E5", highlightbackground="#666")
+# canvas.create_window(10, temp_y + rel_y, anchor=NW, window=load_key_btn)
+
 # load key button
-load_key_btn = Button(root, text="Load Key", command=load_key, anchor=W, fg='white',
+update_btn = Button(root, text="Update Info", command=update_all, anchor=W, fg='white',
                       width=10, activebackground="#33B5E5", highlightbackground="#666")
-canvas.create_window(10, temp_y + rel_y, anchor=NW, window=load_key_btn)
+canvas.create_window(10, temp_y + rel_y, anchor=NW, window=update_btn)
 
 # make transaction button
 transaction_btn = Button(root, text="Transaction", command=make_transaction, anchor=W, fg='white',
@@ -128,11 +165,11 @@ curr_trans_label = Label(root, text="Current Transactions:", anchor=W,
                          fg='black', bg='#666', font='none 16 bold')
 canvas.create_window(10, temp_y, anchor=NW, window=curr_trans_label)
 
-trans_str = ""
-for transaction in node.transaction_pool:
-    trans_str += transaction + '\n'
+# trans_str = ""
+# for transaction in node.transaction_pool:
+#     trans_str += transaction + '\n'
 
-curr_trans_box.insert(END, trans_str)
+# curr_trans_box.insert(END, trans_str)
 
 text = """1.
 2.
@@ -148,6 +185,16 @@ curr_trans_num = Label(root, width=3, height=10, font='none 14 bold',
                        background='#666', highlightbackground="#666", text=text)
 canvas.create_window(10, temp_y + rel_y, anchor=NW, window=curr_trans_num)
 ### End of display current transactions ###
+
+# create blockchain node
+port = random.randint(1111,9999)
+host = 'localhost'
+node = Blockchain.BlockchainNode(host, port, eventCallback)
+node.start()
+node.join_network(host, 888)
+print(node.transaction_pool)
+
+update_transaction_pool()
 
 # Display my transactions
 temp_x = width
