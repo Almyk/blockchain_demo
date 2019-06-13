@@ -128,6 +128,12 @@ curr_trans_label = Label(root, text="Current Transactions:", anchor=W,
                          fg='black', bg='#666', font='none 16 bold')
 canvas.create_window(10, temp_y, anchor=NW, window=curr_trans_label)
 
+trans_str = ""
+for transaction in node.transaction_pool:
+    trans_str += transaction + '\n'
+
+curr_trans_box.insert(END, trans_str)
+
 text = """1.
 2.
 3.
