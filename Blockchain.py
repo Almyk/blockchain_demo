@@ -170,6 +170,7 @@ class BlockchainNode(Node.Node):
             new_block.deserialize()
             if self.is_valid_block(new_block) is True:
                 self.blockchain.append_block(new_block)
+                self.transaction_pool = self.transaction_pool[10:0]
                 print("A valid block was received:")
                 print(data['transaction_list'])
 
