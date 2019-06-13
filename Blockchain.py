@@ -183,16 +183,27 @@ class BlockchainNode(Node.Node):
         3. Transaction에 공개키를 포함시킨다.
         4. 생성된 Transaction을 P2P네트워크에 전파한다.
         '''
-        digital_signature = ecdsa.sign(sender + receiver + data, self.private_key)
-        new_transaction = self.Transaction(sender,receiver,data,digital_signature,self.public_key)
-        new_transaction.serialize()
-        jdata = json.dumps(new_transaction.__dict__)
-        jdata = json.loads(jdata)
-        jdata['Type'] = 'transaction'
-        new_transaction.deserialize()
-        self.transaction_pool.append(new_transaction.item_history)
+        ret_str = ""
+        if self.get_unique_node_count() >= 5 and self.miner_count >= 2:
+            digital_signature = ecdsa.sign(sender + receiver + data, self.private_key)
+            new_transaction = self.Transaction(sender,receiver,data,digital_signature,self.public_key)
+            new_transaction.serialize()
+            jdata = json.dumps(new_transaction.__dict__)
+            jdata = json.loads(jdata)
+            jdata['Type'] = 'transaction'
+            new_transaction.deserialize()
+            self.transaction_pool.append(new_transaction.item_history)
 
-        self.sendAll(jdata)
+            self.sendAll(jdata)
+            return ret_str
+        else:
+            ret_str = "Failed to generate transaction: "
+            if self.get_unique_node_count() < 5:
+                ret_str += "'Too few users in network' "
+            if self.miner_count < 2:
+                ret_str += "'Too few miners in network'"
+            print(ret_str)
+            return ret_str
 
     def get_blockchain_from_network(self):
         '''
@@ -246,6 +257,25 @@ class BlockchainNode(Node.Node):
             self.miner_count -= 1
             self.sendAll({'Type': 'retired_miner'})
 
+    def get_unique_node_count(self):
+        allnodes = self.getAllNodes()
+
+        unique_nodes = dict()
+        uniq_count = 0
+        for node in allnodes:
+            port = node.peerPort
+            host = node.peerHost
+            if port not in unique_nodes.keys():
+                unique_nodes[port] = [host]
+                uniq_count += 1
+            elif host not in unique_nodes[port]:
+                hosts = unique_nodes[port]
+                hosts.append(host)
+                unique_nodes[port] = hosts
+                uniq_count += 1
+
+        return uniq_count
+
 class Mine(threading.Thread):
     def __init__(self, blockchainNode):
         super(Mine, self).__init__()
@@ -269,7 +299,8 @@ class Mine(threading.Thread):
             new_transaction = self.blockchainNode.transaction_pool[0:10]
             self.blockchainNode.transaction_pool = self.blockchainNode.transaction_pool[10:]
             block = self.blockchainNode.Blockchain.Block(prev.index + 1, time.time(), prev.get_hash_val(), new_transaction, 0)
-            if self.proof_of_work(block): # if hash puzzle is solved send block
+            if self.blockchainNode.get_unique_node_count() >= 5 and self.blockchainNode.miner_count >= 2 and self.proof_of_work(block):
+                # if hash puzzle is solved send block
                 print("new block created")
                 self.blockchainNode.blockchain.append_block(block)
                 block.serialize()

@@ -125,7 +125,7 @@ class Node(threading.Thread):
                 hosts = sent[port]
                 hosts.append(host)
                 sent[port] = hosts
-            time.sleep(1)  # TODO : this is only for debugging
+            time.sleep(0.1)  # TODO : this is only for debugging
             #print("sent:", sent)  # TODO : this is only for debugging
 
     def sendToNode(self, node, data):
