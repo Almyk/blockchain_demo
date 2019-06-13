@@ -23,12 +23,6 @@ def load_key():
     messagebox.showinfo("Load Key", "To be implemented ;) ")
     pass
 
-def update_all():
-    update_transaction_pool()
-    update_miner()
-    update_user()
-    pass
-
 
 def make_transaction():
     # TODO: popup where you set receiver, using public key, and determine amount to send
@@ -76,6 +70,13 @@ def update_transaction_pool():
     curr_trans_box.insert(END, trans_str)
 
 
+def update_all():
+    update_transaction_pool()
+    update_miner()
+    update_user()
+    update_blocks()
+
+
 def update_miner():
     miner_count.delete(0.0, END)
     node.ask_for_mine_count()
@@ -87,6 +88,19 @@ def update_user():
     user_count.delete(0.0, END)
     count = str(node.get_unique_node_count())
     user_count.insert(END, count)
+
+def update_blocks():
+    block_box.delete(0.0, END)
+    chain = node.blockchain.chain
+    block_str = ""
+    for block in chain:
+        stamp = str(block.time_stamp)
+        try:
+            stamp = time.ctime(block.time_stamp)
+        except Exception as e:
+            print(e)
+        block_str += stamp + ':\n ' + str(block.transaction_list) +'\n-----\n'
+    block_box.insert(END, block_str)
 
 
 root = Tk()
@@ -196,21 +210,21 @@ print(node.transaction_pool)
 
 update_transaction_pool()
 
-# Display my transactions
+# Display blocks
 temp_x = width
-label_x = width/2 + width/4 + 97 + 10
+label_x = width/2 + width/4 + 58
 temp_y = 230
 rel_y = 26
 
-my_trans_box = Text(root, width=40, wrap=WORD, font='none 14 bold',
+block_box = Text(root, width=40, wrap=WORD, font='none 14 bold',
                       background='gray', highlightbackground="#666")
-canvas.create_window(temp_x, temp_y+rel_y, anchor=NE, window=my_trans_box)
-my_trans_box.bindtags((str(my_trans_box), str(root), "all"))
+canvas.create_window(temp_x, temp_y+rel_y, anchor=NE, window=block_box)
+block_box.bindtags((str(block_box), str(root), "all"))
 
-my_trans_label = Label(root, text="My Transactions:", anchor=W,
+block_label = Label(root, text="My Blocks:", anchor=W,
                          fg='black', bg='#666', font='none 16 bold')
-canvas.create_window(label_x, temp_y, anchor=NE, window=my_trans_label)
-### END of display my transaction ###
+canvas.create_window(label_x, temp_y, anchor=NE, window=block_label)
+### END of display blocks ###
 
 # display users in network
 temp_x = label_x + width/16
@@ -243,5 +257,6 @@ count = str(node.miner_count)
 miner_count.insert(END, count)
 ### END of display users ###
 
+update_all()
 root.mainloop()
 
