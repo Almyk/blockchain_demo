@@ -122,6 +122,12 @@ class BlockchainNode(Node.Node):
         self.miner = Mine(self)
         self.miner_count = 0
 
+    def gen_keys(self):
+        self.private_key = self.gen_private_key()
+        self.public_key = self.gen_public_key(self.private_key)
+        self.node_address = self.gen_node_address(self.public_key)
+        return str(self.private_key)
+
     def gen_private_key(self):
         '''
         개인키는 난수생성기를 통해 생성

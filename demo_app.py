@@ -13,13 +13,14 @@ def quit_app():
 
 def generate_key():
     # TODO: use the blockchain class' key generation function
-    messagebox.showinfo("New Key Generated", "A new key has been generated and loaded into the client")
+    key = node.gen_keys()
+    messagebox.showinfo("New Key Generated", "A new key has been generated and loaded into the client\n\n'" + key + "'")
     pass
 
 
 def load_key():
     # TODO: popup that asks for your key
-    messagebox.showinfo("Load Key", "Too be implemented ;) ")
+    messagebox.showinfo("Load Key", "To be implemented ;) ")
     pass
 
 
@@ -167,7 +168,8 @@ user_count.bindtags((str(user_count), str(root), "all"))
 user_label = Label(root, text="Users:", anchor=W,
                          fg='black', bg='#666', font='none 16 bold')
 canvas.create_window(temp_x, 10, anchor=NE, window=user_label)
-user_count.insert(END, "0000000000")
+count = str(node.get_unique_node_count())
+user_count.insert(END, count)
 ### END of display users ###
 
 # display miners in network
@@ -182,7 +184,8 @@ miner_count.bindtags((str(user_count), str(root), "all"))
 miner_label = Label(root, text="Miners:", anchor=W,
                          fg='black', bg='#666', font='none 16 bold')
 canvas.create_window(temp_x, 10+rel_y, anchor=NE, window=miner_label)
-miner_count.insert(END, "0000000000")
+count = str(node.miner_count)
+miner_count.insert(END, count)
 ### END of display users ###
 
 root.mainloop()
