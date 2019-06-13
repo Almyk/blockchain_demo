@@ -335,7 +335,6 @@ class NodeConnection(threading.Thread):
 
                     idx = self.buffer.find("-SEP")
             time.sleep(0.1)
-        print("A client node stopped: %s" % self.server.getName())
 
         self.sock.settimeout(None)
         self.sock.close()

@@ -195,6 +195,20 @@ class BlockchainNode(Node.Node):
         elif type == 'miner_count':
             self.miner_count = data['count']
 
+        elif type == 'ask_transaction_pool':
+            host, port = data['Address']
+
+            allnodes = self.getAllNodes()
+            for node in allnodes:
+                rcv_port = node.port
+                rcv_host = node.host
+                if host == rcv_host and port == rcv_port:
+                    self.sendToNode(node, {'Type': 'transaction_pool', 'pool': self.transaction_pool})
+                    break
+
+        elif type == 'transaction_pool':
+            self.transaction_pool = data['pool']
+
     def gen_transaction(self, sender: str, receiver: str, data: str):
         '''    
         새로운 거래를 생성하는 함수
@@ -300,14 +314,21 @@ class BlockchainNode(Node.Node):
     def ask_for_mine_count(self):
         for node in self.nodesOut:
             if not node.shouldTerminate:
-                print("send to node: ", node)
                 self.sendToNode(node, {'Type': 'ask_mine_count', 'Address': (self.host, self.port)})
+                break
+
+    def ask_for_transaction_pool(self):
+        for node in self.nodesOut:
+            if not node.shouldTerminate:
+                self.sendToNode(node, {'Type': 'ask_transaction_pool', 'Address': (self.host, self.port)})
                 break
 
     def join_network(self, host, port):
         self.connectToNode(host, port)
         time.sleep(0.5)
         self.ask_for_mine_count()
+        self.ask_for_transaction_pool()
+        time.sleep(0.5)
 
 class Mine(threading.Thread):
     def __init__(self, blockchainNode):

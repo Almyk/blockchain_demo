@@ -54,6 +54,7 @@ host = 'localhost'
 node = Blockchain.BlockchainNode(host, port, eventCallback)
 node.start()
 node.join_network(host, 888)
+print(node.transaction_pool)
 
 
 root = Tk()
