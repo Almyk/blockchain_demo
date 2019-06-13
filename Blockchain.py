@@ -261,7 +261,7 @@ class BlockchainNode(Node.Node):
         allnodes = self.getAllNodes()
 
         unique_nodes = dict()
-        uniq_count = 0
+        uniq_count = 1
         for node in allnodes:
             port = node.peerPort
             host = node.peerHost
