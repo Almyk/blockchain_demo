@@ -46,6 +46,19 @@ time.sleep(3)
 print("Messages from node 2")
 node2.sendAll({"test3": "node 2"})      # should send to all other nodes in network
 
+node2.sendAll({"test4": "node 2"})
+node2.sendAll({"test5": "node 2"})
+node2.sendAll({"test6": "node 2"})
+node2.sendAll({"test7": "node 2"})
+node2.sendAll({"test8": "node 2"})
+node2.sendAll({"test9": "node 2"})
+node2.sendAll({"test10": "node 2"})
+node2.sendAll({"test11": "node 2"})
+node2.sendAll({"test12": "node 2"})
+node2.sendAll({"test13": "node 2"})
+node2.sendAll({"test14": "node 2"})
+
+
 node1.stop()
 node2.stop()
 node3.stop()

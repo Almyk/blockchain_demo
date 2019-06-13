@@ -226,7 +226,7 @@ class BlockchainNode(Node.Node):
 
     def stop_mining(self):
         self.miner.stop_mining()
-        self.miner.join()
+        # self.miner.join()
         print("%s stopped mining" % self.node_address)
 
 class Mine(threading.Thread):
@@ -243,14 +243,16 @@ class Mine(threading.Thread):
         nonce를 먼저 구한 노드로부터 새로운 Block을 제공받음
         '''
         while (self.should_terminate == False):
-            while len(self.blockchainNode.transaction_pool) < 5:
-                time.sleep(2)
+            while len(self.blockchainNode.transaction_pool) < 10:
+                if self.should_terminate:
+                    return
             print("start")
             prev = self.blockchainNode.blockchain.get_last_block
             new_transaction = self.blockchainNode.transaction_pool[0:10]
             self.blockchainNode.transaction_pool = self.blockchainNode.transaction_pool[10:]
             block = self.blockchainNode.Blockchain.Block(prev.index + 1, time.time(), prev.get_hash_val(), new_transaction, 0)
             if self.proof_of_work(block): # if hash puzzle is solved send block
+                print("new block created")
                 block.serialize()
                 data = json.dumps(block.__dict__)
                 data = json.loads(data)
