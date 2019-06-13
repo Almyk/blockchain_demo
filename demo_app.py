@@ -4,35 +4,49 @@ from tkinter import messagebox
 from PIL import ImageTk, Image
 import time
 
+
 def generate_key():
     # TODO: use the blockchain class' key generation function
-    messagebox.showinfo("New Key Generated", "A new key has been generated and loaded into the client\n\nYou can find the key stored in your documents folder")
+    messagebox.showinfo("New Key Generated", "A new key has been generated and loaded into the client")
     pass
+
 
 def load_key():
     # TODO: popup that asks for your key
+    messagebox.showinfo("Load Key", "Too be implemented ;) ")
     pass
+
 
 def make_transaction():
     # TODO: popup where you set receiver, using public key, and determine amount to send
     pass
+
 
 def start_mining():
     # TODO: tell the node to start mining process
     messagebox.showinfo("Mining", "Started Mining\n\nIf you succeed in generating a block you will earn coins")
     pass
 
+
 def stop_mining():
     # TODO: tell the node to stop mining
     messagebox.showinfo("Mining", "Stopped Mining")
     pass
 
+
 def view_history():
     # TODO: popup that shows the block history, scrollable window
     pass
 
-# TODO
-node = Blockchain()
+
+def eventCallback(event, server, node, data=None):
+    pass
+# create blockchain node
+port = 666
+host = 'localhost'
+node = Blockchain.BlockchainNode(host, port, eventCallback)
+node.start()
+node.connectToNode(host, 888)
 
 root = Tk()
 root.title("Sogang Blockcoin")
@@ -136,19 +150,34 @@ my_trans_label = Label(root, text="My Transactions:", anchor=W,
 canvas.create_window(label_x, temp_y, anchor=NE, window=my_trans_label)
 ### END of display my transaction ###
 
-# display my money
+# display users in network
 temp_x = label_x + width/16
 
-my_money = Text(root, width=10, height=1, wrap=WORD, font='none 14 bold',
-                      background='gray', highlightbackground="#666")
-canvas.create_window(temp_x, 10, anchor=NW, window=my_money)
-my_money.bindtags((str(my_money), str(root), "all"))
+user_count = Text(root, width=10, height=1, wrap=WORD, font='none 14 bold',
+                  background='gray', highlightbackground="#666")
+canvas.create_window(temp_x, 10, anchor=NW, window=user_count)
+user_count.bindtags((str(user_count), str(root), "all"))
 
-my_trans_label = Label(root, text="My Money:", anchor=W,
+user_label = Label(root, text="Users:", anchor=W,
                          fg='black', bg='#666', font='none 16 bold')
-canvas.create_window(temp_x, 10, anchor=NE, window=my_trans_label)
-my_money.insert(END, "0000000000")
-### END of display my mone ###
+canvas.create_window(temp_x, 10, anchor=NE, window=user_label)
+user_count.insert(END, "0000000000")
+### END of display users ###
+
+# display miners in network
+temp_x = label_x + width/16
+rel_y = 40
+
+miner_count = Text(root, width=10, height=1, wrap=WORD, font='none 14 bold',
+                  background='gray', highlightbackground="#666")
+canvas.create_window(temp_x, 10+rel_y, anchor=NW, window=miner_count)
+miner_count.bindtags((str(user_count), str(root), "all"))
+
+miner_label = Label(root, text="Miners:", anchor=W,
+                         fg='black', bg='#666', font='none 16 bold')
+canvas.create_window(temp_x, 10+rel_y, anchor=NE, window=miner_label)
+miner_count.insert(END, "0000000000")
+### END of display users ###
 
 root.mainloop()
 
