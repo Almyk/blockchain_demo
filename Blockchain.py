@@ -151,7 +151,6 @@ class BlockchainNode(Node.Node):
         '''
         p2p네트워크로부터 온 json데이터를 data['Type']에 따라서 이벤트 헨들링 하는 method
         '''
-        # type : (None), node_propagation, peer_address, message
         type = data['Type']
         if type == 'transaction':
             digital_signature = data['digital_signature']
@@ -175,10 +174,26 @@ class BlockchainNode(Node.Node):
                 print(data['transaction_list'])
 
         elif type == 'new_miner':
+            print(self.getName(), "miner_count++")
             self.miner_count += 1
 
         elif type == 'retired_miner':
+            print(self.getName(), "miner_count--")
             self.miner_count -= 1
+
+        elif type == 'ask_mine_count':
+            host, port = data['Address']
+
+            allnodes = self.getAllNodes()
+            for node in allnodes:
+                rcv_port = node.port
+                rcv_host = node.host
+                if host == rcv_host and port == rcv_port:
+                    self.sendToNode(node, {'Type': 'miner_count', 'count': self.miner_count})
+                    break
+
+        elif type == 'miner_count':
+            self.miner_count = data['count']
 
     def gen_transaction(self, sender: str, receiver: str, data: str):
         '''    
@@ -281,6 +296,13 @@ class BlockchainNode(Node.Node):
                 uniq_count += 1
 
         return uniq_count
+
+    def ask_for_mine_count(self):
+        for node in self.nodesOut:
+            if not node.shouldTerminate:
+                print("send to node: ", node)
+                self.sendToNode(node, {'Type': 'ask_mine_count', 'Address': (self.host, self.port)})
+                break
 
 class Mine(threading.Thread):
     def __init__(self, blockchainNode):

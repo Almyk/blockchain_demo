@@ -2,7 +2,7 @@ import Blockchain
 import time
 import random
 
-port1 = 889
+port1 = 888
 port2 = random.randint(1111,9999)
 port3 = random.randint(1111,9999)
 port4 = random.randint(1111,9999)

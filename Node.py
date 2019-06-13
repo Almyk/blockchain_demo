@@ -79,6 +79,7 @@ class Node(threading.Thread):
     # Creates the TCP/IP socket for connections
     def serverInit(self):
         sock = socket.socket()  # create socket, by default uses AF_INET
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.bind(('', self.port))  # '' used as host to mean all available interfaces
         sock.settimeout(15.0)  # 15 seconds
         sock.listen(10)  # backlog = 10, meaning 10 nodes can be waiting while establishing connection
