@@ -1,6 +1,6 @@
 import Blockchain
 from tkinter import *
-from tkinter import messagebox
+from tkinter import messagebox, simpledialog
 from PIL import ImageTk, Image
 import time
 import random
@@ -25,8 +25,9 @@ def load_key():
 
 
 def make_transaction():
-    # TODO: popup where you set receiver, using public key, and determine amount to send
-    pass
+    msg = simpledialog.askstring("Input", "Message to send", parent=root)
+    node.gen_transaction(node.node_address, node.node_address, msg)
+    update_all()
 
 
 def start_mining():
