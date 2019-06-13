@@ -120,6 +120,7 @@ class BlockchainNode(Node.Node):
         self.public_key = self.gen_public_key(self.private_key)
         self.node_address = self.gen_node_address(self.public_key)
         self.miner = Mine(self)
+        self.miner_count = 0
 
     def gen_private_key(self):
         '''
@@ -159,13 +160,19 @@ class BlockchainNode(Node.Node):
                 print("A valid transaction was received:")
                 print(item_history)
 
-        if type == 'new_block':
-            new_block =self.Blockchain.Block(data['index'],data['time_stamp'],data['prev_block_hash'],data['transaction_list'],int(data['nonce']))
+        elif type == 'new_block':
+            new_block = self.Blockchain.Block(data['index'],data['time_stamp'],data['prev_block_hash'],data['transaction_list'],int(data['nonce']))
             new_block.deserialize()
             if self.is_valid_block(new_block) is True:
                 self.blockchain.append_block(new_block)
                 print("A valid block was received:")
                 print(data['transaction_list'])
+
+        elif type == 'new_miner':
+            self.miner_count += 1
+
+        elif type == 'retired_miner':
+            self.miner_count -= 1
 
     def gen_transaction(self, sender: str, receiver: str, data: str):
         '''    
@@ -183,6 +190,8 @@ class BlockchainNode(Node.Node):
         jdata = json.loads(jdata)
         jdata['Type'] = 'transaction'
         new_transaction.deserialize()
+        self.transaction_pool.append(new_transaction.item_history)
+
         self.sendAll(jdata)
 
     def get_blockchain_from_network(self):
@@ -218,22 +227,31 @@ class BlockchainNode(Node.Node):
         검증에 실패하면 받은 block을 무시한다. (아무 행동도 하지 않는다.)
         '''
         prev = self.blockchain.get_last_block
-        return (block.prev_block_hash == 0 or prev.get_hash_val() == block.prev_block_hash )  and  (block.get_hash_val() < LEVEL)
+        if prev.get_hash_val() != block.prev_block_hash:
+            print("prev.get_hash_val() != block.prev_block_hash")
+        return (block.prev_block_hash == 0 or prev.get_hash_val() == block.prev_block_hash) and (block.get_hash_val() < LEVEL)
 
     def start_mining(self):
-        self.miner.start()
-        print("%s started mining" % self.node_address)
+        if not self.miner.is_mining:
+            self.miner.start()
+            print("%s started mining" % self.node_address)
+            self.miner_count += 1
+            self.sendAll({'Type': 'new_miner'})
 
     def stop_mining(self):
-        self.miner.stop_mining()
-        # self.miner.join()
-        print("%s stopped mining" % self.node_address)
+        if self.miner.is_mining:
+            self.miner.stop_mining()
+            # self.miner.join()
+            print("%s stopped mining" % self.node_address)
+            self.miner_count -= 1
+            self.sendAll({'Type': 'retired_miner'})
 
 class Mine(threading.Thread):
     def __init__(self, blockchainNode):
         super(Mine, self).__init__()
         self.should_terminate = False
         self.blockchainNode = blockchainNode
+        self.is_mining = False
 
     def run(self):
         '''
@@ -242,23 +260,26 @@ class Mine(threading.Thread):
         만일 다른 노드에서 먼저 Nonce를 전송했다면, 내가 하고있던 mine은 interrupted되고,
         nonce를 먼저 구한 노드로부터 새로운 Block을 제공받음
         '''
+        self.is_mining = True
         while (self.should_terminate == False):
             while len(self.blockchainNode.transaction_pool) < 10:
                 if self.should_terminate:
                     return
-            print("start")
             prev = self.blockchainNode.blockchain.get_last_block
             new_transaction = self.blockchainNode.transaction_pool[0:10]
             self.blockchainNode.transaction_pool = self.blockchainNode.transaction_pool[10:]
             block = self.blockchainNode.Blockchain.Block(prev.index + 1, time.time(), prev.get_hash_val(), new_transaction, 0)
             if self.proof_of_work(block): # if hash puzzle is solved send block
                 print("new block created")
+                self.blockchainNode.blockchain.append_block(block)
                 block.serialize()
                 data = json.dumps(block.__dict__)
                 data = json.loads(data)
                 data['Type'] = 'new_block'
                 self.blockchainNode.sendAll(data)
                 block.deserialize()
+
+        self.is_mining = False
 
     def proof_of_work(self,block) -> bool:
         '''
@@ -274,6 +295,7 @@ class Mine(threading.Thread):
                 return False
             if self.blockchainNode.blockchain.get_last_block.get_hash_val() != block.prev_block_hash:
                 return False
+        print("block hash:")
         print(block.get_hash_val())
         return True
 

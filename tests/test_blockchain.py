@@ -53,6 +53,7 @@ node1.gen_transaction(node1.node_address, node2.node_address, "pizza 8")
 node1.gen_transaction(node1.node_address, node2.node_address, "pizza 9")
 node1.gen_transaction(node1.node_address, node2.node_address, "pizza 10")
 
+time.sleep(2)
 
 # testan = True
 # i = 0
