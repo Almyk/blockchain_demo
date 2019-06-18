@@ -1,7 +1,19 @@
 # blockchain_demo
 Blockchain Demo for Software Engineering Class
 
-To run the tests in the test folder:
+# How to test the demo app
+
+1. Navigate terminal to the top folder of the project
+2. Run following command:
+```bash
+python3 -m tests.test_demo_app
+```
+3. Then start demo_app.py in another terminal:
+```bash
+python3 demo_app.py
+```
+  *  *  *  *  *
+To run the various tests in the test folder:
 ```python
 python3 -m tests.[test]
 ```
